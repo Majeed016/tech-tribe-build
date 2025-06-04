@@ -2,14 +2,13 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Code2, LogOut, Plus } from "lucide-react";
+import { Code2, LogOut, Plus, User, Search } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const userName = localStorage.getItem("userName") || "User";
-  const userRole = localStorage.getItem("userRole") || "Student";
 
   const handleLogout = () => {
     localStorage.removeItem("isAuthenticated");
@@ -28,7 +27,7 @@ const Dashboard = () => {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate("/")}>
               <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600">
                 <Code2 className="h-5 w-5 text-white" />
               </div>
@@ -64,25 +63,31 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate("/projects")}>
             <CardHeader>
-              <CardTitle>Browse Projects</CardTitle>
+              <CardTitle className="flex items-center">
+                <Search className="h-5 w-5 mr-2" />
+                Browse Projects
+              </CardTitle>
               <CardDescription>Discover exciting projects to join</CardDescription>
             </CardHeader>
           </Card>
 
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate("/post-project")}>
             <CardHeader>
-              <CardTitle>
-                <Plus className="h-5 w-5 inline mr-2" />
+              <CardTitle className="flex items-center">
+                <Plus className="h-5 w-5 mr-2" />
                 Post Project
               </CardTitle>
               <CardDescription>Share your project idea with others</CardDescription>
             </CardHeader>
           </Card>
 
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate("/profile")}>
             <CardHeader>
-              <CardTitle>My Profile</CardTitle>
-              <CardDescription>Manage your profile and skills</CardDescription>
+              <CardTitle className="flex items-center">
+                <User className="h-5 w-5 mr-2" />
+                My Profile
+              </CardTitle>
+              <CardDescription>Manage your profile and applications</CardDescription>
             </CardHeader>
           </Card>
         </div>

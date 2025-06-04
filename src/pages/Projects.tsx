@@ -5,30 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Code2, ArrowLeft, Search } from "lucide-react";
 import ProjectCard from "@/components/ProjectCard";
-import { useToast } from "@/hooks/use-toast";
 
 const Projects = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
-
-  const handleApplyToProject = () => {
-    if (!isAuthenticated) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign up or log in to apply to projects.",
-        variant: "destructive",
-      });
-      navigate("/signup");
-      return;
-    }
-    
-    toast({
-      title: "Application submitted!",
-      description: "Your application has been sent to the project owner.",
-    });
-  };
 
   const sampleProjects = [
     {
@@ -43,8 +24,21 @@ const Projects = () => {
       rolesNeeded: ["Mobile Developer", "ML Engineer"],
       duration: "3 months",
       teamSize: 4,
-      applicants: 12,
-      onApply: handleApplyToProject
+      applicants: 12
+    },
+    {
+      title: "Blockchain Voting System",
+      description: "A secure and transparent voting system built on blockchain technology for campus elections and decision-making.",
+      author: {
+        name: "Alex Rodriguez",
+        role: "Computer Science",
+        avatar: ""
+      },
+      skills: ["Blockchain", "Solidity", "React", "Web3"],
+      rolesNeeded: ["Blockchain Developer", "Frontend Developer"],
+      duration: "4 months",
+      teamSize: 5,
+      applicants: 18
     },
     {
       title: "Sustainable Campus Marketplace",
@@ -58,8 +52,7 @@ const Projects = () => {
       rolesNeeded: ["Frontend Developer", "Backend Developer", "UI/UX Designer"],
       duration: "4 months",
       teamSize: 5,
-      applicants: 8,
-      onApply: handleApplyToProject
+      applicants: 8
     },
     {
       title: "Virtual Reality Campus Tour",
@@ -73,8 +66,7 @@ const Projects = () => {
       rolesNeeded: ["VR Developer", "3D Artist", "Sound Designer"],
       duration: "6 months",
       teamSize: 6,
-      applicants: 15,
-      onApply: handleApplyToProject
+      applicants: 15
     }
   ];
 
@@ -84,17 +76,26 @@ const Projects = () => {
     project.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  const handleBack = () => {
+    // Check if user came from dashboard, otherwise go to home
+    if (isAuthenticated) {
+      navigate("/dashboard");
+    } else {
+      navigate("/");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center space-x-4">
-              <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
+              <Button variant="ghost" size="sm" onClick={handleBack}>
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back
               </Button>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate("/")}>
                 <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600">
                   <Code2 className="h-5 w-5 text-white" />
                 </div>
