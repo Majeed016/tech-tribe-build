@@ -22,29 +22,50 @@ const TeamChat = () => {
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get("project");
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 1,
-      user: "Sarah Chen",
-      message: "Welcome to the team! Let's discuss our project milestones.",
-      timestamp: "10:30 AM"
-    },
-    {
-      id: 2,
-      user: "John Doe",
-      message: "Great! I've started working on the frontend components.",
-      timestamp: "10:35 AM"
-    },
-    {
-      id: 3,
-      user: "Alice Smith",
-      message: "I'll handle the backend API integration. Should be ready by tomorrow.",
-      timestamp: "10:40 AM"
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
 
-  const projectTitle = projectId ? `Project ${projectId}` : "Team Chat";
-  const teamMembers = ["Sarah Chen", "John Doe", "Alice Smith", "Mike Johnson"];
+  // Get project-specific messages from localStorage
+  useEffect(() => {
+    const chatKey = projectId ? `chat_${projectId}` : "general_chat";
+    const savedMessages = localStorage.getItem(chatKey);
+    
+    if (savedMessages) {
+      setMessages(JSON.parse(savedMessages));
+    } else {
+      // Default messages for different projects
+      const defaultMessages: Message[] = projectId ? [
+        {
+          id: 1,
+          user: "Project Owner",
+          message: `Welcome to the ${getProjectTitle()} team chat! Let's collaborate effectively.`,
+          timestamp: "10:30 AM"
+        }
+      ] : [
+        {
+          id: 1,
+          user: "System",
+          message: "Welcome to the general team chat!",
+          timestamp: "10:30 AM"
+        }
+      ];
+      setMessages(defaultMessages);
+    }
+  }, [projectId]);
+
+  const getProjectTitle = () => {
+    if (!projectId) return "General Chat";
+    
+    // Try to get project title from user's posted projects
+    const userProjects = JSON.parse(localStorage.getItem("userProjects") || "[]");
+    const project = userProjects.find((p: any) => p.id.toString() === projectId);
+    
+    return project ? project.title : `Project ${projectId}`;
+  };
+
+  const projectTitle = getProjectTitle();
+  const teamMembers = projectId ? 
+    ["Project Owner", "John Doe", "Alice Smith", "You"] : 
+    ["System", "General Users"];
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +78,13 @@ const TeamChat = () => {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
 
-    setMessages([...messages, newMessage]);
+    const updatedMessages = [...messages, newMessage];
+    setMessages(updatedMessages);
+    
+    // Save to localStorage with project-specific key
+    const chatKey = projectId ? `chat_${projectId}` : "general_chat";
+    localStorage.setItem(chatKey, JSON.stringify(updatedMessages));
+    
     setMessage("");
     
     toast({
@@ -110,7 +137,7 @@ const TeamChat = () => {
             <Card className="lg:col-span-3">
               <CardHeader>
                 <CardTitle>Team Discussion</CardTitle>
-                <CardDescription>Real-time collaboration space</CardDescription>
+                <CardDescription>Real-time collaboration space for {projectTitle}</CardDescription>
               </CardHeader>
               <CardContent className="h-96 flex flex-col">
                 {/* Messages */}
@@ -149,13 +176,32 @@ const TeamChat = () => {
             </Card>
           </div>
 
+          {!projectId && (
+            <div className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Project-Specific Chat</CardTitle>
+                  <CardDescription>
+                    To access project-specific team chats, navigate to your posted projects 
+                    in the Dashboard and click the "Team Chat" button for each project.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button variant="outline" onClick={() => navigate("/dashboard")}>
+                    Go to Dashboard
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
           <div className="mt-6">
             <Card>
               <CardHeader>
                 <CardTitle>Supabase Realtime Integration</CardTitle>
                 <CardDescription>
-                  This chat uses mock data. To enable real-time messaging, connect your project to Supabase 
-                  and we'll set up Supabase Realtime for live collaboration.
+                  This chat uses mock data stored locally. To enable real-time messaging across devices, 
+                  connect your project to Supabase and we'll set up Supabase Realtime for live collaboration.
                 </CardDescription>
               </CardHeader>
               <CardContent>

@@ -11,6 +11,8 @@ import Projects from "./pages/Projects";
 import PostProject from "./pages/PostProject";
 import Profile from "./pages/Profile";
 import TeamChat from "./pages/TeamChat";
+import HowItWorks from "./pages/HowItWorks";
+import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +31,8 @@ const App = () => (
         <Route path="/post-project" element={<PostProject />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/team-chat" element={<TeamChat />} />
+        <Route path="/how-it-works" element={<HowItWorks />} />
+        <Route path="/about" element={<About />} />
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />
       </Routes>

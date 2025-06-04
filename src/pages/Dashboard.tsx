@@ -5,55 +5,44 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Code2, LogOut, Plus, User, Search, MessageSquare, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useEffect, useState } from "react";
+
+interface UserApplication {
+  id: number;
+  projectTitle: string;
+  role: string;
+  status: "pending" | "accepted" | "rejected";
+  appliedDate: string;
+}
+
+interface UserProject {
+  id: number;
+  title: string;
+  applicants: number;
+  status: "active";
+  createdDate: string;
+}
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const userName = localStorage.getItem("userName") || "User";
+  const [userApplications, setUserApplications] = useState<UserApplication[]>([]);
+  const [userProjects, setUserProjects] = useState<UserProject[]>([]);
 
-  // Mock data for user's applications
-  const userApplications = [
-    {
-      id: 1,
-      projectTitle: "AI-Powered Study Buddy App",
-      role: "Frontend Developer",
-      status: "pending",
-      appliedDate: "2024-01-15"
-    },
-    {
-      id: 2,
-      projectTitle: "Blockchain Voting System",
-      role: "Full Stack Developer", 
-      status: "accepted",
-      appliedDate: "2024-01-10"
-    },
-    {
-      id: 3,
-      projectTitle: "Sustainable Campus Marketplace",
-      role: "Backend Developer",
-      status: "rejected",
-      appliedDate: "2024-01-05"
+  useEffect(() => {
+    // Load user applications from localStorage
+    const savedApplications = localStorage.getItem("userApplications");
+    if (savedApplications) {
+      setUserApplications(JSON.parse(savedApplications));
     }
-  ];
 
-  // Mock data for user's posted projects
-  const userProjects = [
-    {
-      id: 1,
-      title: "E-commerce Platform Redesign",
-      applicants: 12,
-      status: "active",
-      createdDate: "2024-01-20"
-    },
-    {
-      id: 2,
-      title: "Mobile Fitness Tracker",
-      applicants: 8,
-      status: "active", 
-      createdDate: "2024-01-18"
+    // Load user projects from localStorage
+    const savedProjects = localStorage.getItem("userProjects");
+    if (savedProjects) {
+      setUserProjects(JSON.parse(savedProjects));
     }
-  ];
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem("isAuthenticated");
@@ -68,6 +57,10 @@ const Dashboard = () => {
   };
 
   const handleDeleteProject = (projectId: number, projectTitle: string) => {
+    const updatedProjects = userProjects.filter(project => project.id !== projectId);
+    setUserProjects(updatedProjects);
+    localStorage.setItem("userProjects", JSON.stringify(updatedProjects));
+    
     toast({
       title: "Project deleted",
       description: `"${projectTitle}" has been removed successfully.`,
@@ -159,18 +152,29 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {userApplications.map((app) => (
-                  <div key={app.id} className="border rounded-lg p-4">
-                    <h4 className="font-medium mb-1">{app.projectTitle}</h4>
-                    <p className="text-sm text-muted-foreground mb-2">{app.role}</p>
-                    <div className="flex justify-between items-center">
-                      <Badge className={getStatusColor(app.status)}>
-                        {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">{app.appliedDate}</span>
+                {userApplications.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No applications yet. <button 
+                      onClick={() => navigate("/projects")} 
+                      className="text-blue-600 hover:underline"
+                    >
+                      Browse projects
+                    </button> to get started!
+                  </p>
+                ) : (
+                  userApplications.map((app) => (
+                    <div key={app.id} className="border rounded-lg p-4">
+                      <h4 className="font-medium mb-1">{app.projectTitle}</h4>
+                      <p className="text-sm text-muted-foreground mb-2">{app.role}</p>
+                      <div className="flex justify-between items-center">
+                        <Badge className={getStatusColor(app.status)}>
+                          {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">{app.appliedDate}</span>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
@@ -183,36 +187,47 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {userProjects.map((project) => (
-                  <div key={project.id} className="border rounded-lg p-4">
-                    <div className="flex justify-between items-start mb-2">
-                      <h4 className="font-medium">{project.title}</h4>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteProject(project.id, project.title)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                {userProjects.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No projects posted yet. <button 
+                      onClick={() => navigate("/post-project")} 
+                      className="text-blue-600 hover:underline"
+                    >
+                      Post your first project
+                    </button>!
+                  </p>
+                ) : (
+                  userProjects.map((project) => (
+                    <div key={project.id} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-medium">{project.title}</h4>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteProject(project.id, project.title)}
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="flex justify-between items-center text-sm text-muted-foreground">
+                        <span>{project.applicants} applicants</span>
+                        <span>{project.createdDate}</span>
+                      </div>
+                      <div className="mt-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/team-chat?project=${project.id}`)}
+                          className="mr-2"
+                        >
+                          <MessageSquare className="h-4 w-4 mr-1" />
+                          Team Chat
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex justify-between items-center text-sm text-muted-foreground">
-                      <span>{project.applicants} applicants</span>
-                      <span>{project.createdDate}</span>
-                    </div>
-                    <div className="mt-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/team-chat?project=${project.id}`)}
-                        className="mr-2"
-                      >
-                        <MessageSquare className="h-4 w-4 mr-1" />
-                        Team Chat
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>

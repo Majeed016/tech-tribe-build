@@ -47,7 +47,24 @@ const PostProject = () => {
       return;
     }
 
-    // Here you would normally save to database
+    // Save project to localStorage
+    const newProject = {
+      id: Date.now(),
+      title: title.trim(),
+      description: description.trim(),
+      duration: duration.trim(),
+      teamSize: parseInt(teamSize),
+      skills,
+      roles,
+      applicants: 0,
+      status: "active" as const,
+      createdDate: new Date().toLocaleDateString()
+    };
+
+    const existingProjects = JSON.parse(localStorage.getItem("userProjects") || "[]");
+    const updatedProjects = [...existingProjects, newProject];
+    localStorage.setItem("userProjects", JSON.stringify(updatedProjects));
+
     toast({
       title: "Project posted successfully!",
       description: "Your project is now live and accepting applications.",

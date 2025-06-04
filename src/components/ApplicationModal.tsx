@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,7 +48,22 @@ const ApplicationModal = ({ isOpen, onClose, project }: ApplicationModalProps) =
       return;
     }
 
-    // Here you would normally save the application to database
+    // Save application to localStorage
+    const newApplication = {
+      id: Date.now(),
+      projectTitle: project.title,
+      role: selectedRole,
+      status: "pending" as const,
+      appliedDate: new Date().toLocaleDateString(),
+      message: message.trim(),
+      githubProfile,
+      portfolioLink
+    };
+
+    const existingApplications = JSON.parse(localStorage.getItem("userApplications") || "[]");
+    const updatedApplications = [...existingApplications, newApplication];
+    localStorage.setItem("userApplications", JSON.stringify(updatedApplications));
+
     toast({
       title: "Application submitted!",
       description: "Your application has been sent to the project owner.",
