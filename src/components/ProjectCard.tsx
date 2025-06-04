@@ -1,4 +1,3 @@
-
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -18,6 +17,7 @@ interface ProjectCardProps {
   duration: string;
   teamSize: number;
   applicants: number;
+  onApply?: () => void;
 }
 
 const ProjectCard = ({ 
@@ -28,7 +28,8 @@ const ProjectCard = ({
   rolesNeeded, 
   duration, 
   teamSize, 
-  applicants 
+  applicants,
+  onApply 
 }: ProjectCardProps) => {
   return (
     <Card className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-0 bg-white/50 backdrop-blur-sm">
@@ -105,7 +106,10 @@ const ProjectCard = ({
       </CardContent>
       
       <CardFooter className="pt-0">
-        <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
+        <Button 
+          className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+          onClick={onApply}
+        >
           Apply to Join
         </Button>
       </CardFooter>

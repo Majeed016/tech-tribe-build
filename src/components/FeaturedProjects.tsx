@@ -1,7 +1,29 @@
-
+import { useNavigate } from "react-router-dom";
 import ProjectCard from "./ProjectCard";
+import { useToast } from "@/hooks/use-toast";
 
 const FeaturedProjects = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
+
+  const handleApplyToProject = () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign up or log in to apply to projects.",
+        variant: "destructive",
+      });
+      navigate("/signup");
+      return;
+    }
+    
+    toast({
+      title: "Application submitted!",
+      description: "Your application has been sent to the project owner.",
+    });
+  };
+
   const sampleProjects = [
     {
       title: "AI-Powered Study Buddy App",
@@ -15,7 +37,8 @@ const FeaturedProjects = () => {
       rolesNeeded: ["Mobile Developer", "ML Engineer"],
       duration: "3 months",
       teamSize: 4,
-      applicants: 12
+      applicants: 12,
+      onApply: handleApplyToProject
     },
     {
       title: "Sustainable Campus Marketplace",
@@ -29,7 +52,8 @@ const FeaturedProjects = () => {
       rolesNeeded: ["Frontend Developer", "Backend Developer", "UI/UX Designer"],
       duration: "4 months",
       teamSize: 5,
-      applicants: 8
+      applicants: 8,
+      onApply: handleApplyToProject
     },
     {
       title: "Virtual Reality Campus Tour",
@@ -43,7 +67,8 @@ const FeaturedProjects = () => {
       rolesNeeded: ["VR Developer", "3D Artist", "Sound Designer"],
       duration: "6 months",
       teamSize: 6,
-      applicants: 15
+      applicants: 15,
+      onApply: handleApplyToProject
     },
     {
       title: "Mental Health Chatbot",
@@ -57,7 +82,8 @@ const FeaturedProjects = () => {
       rolesNeeded: ["AI Developer", "Frontend Developer"],
       duration: "4 months",
       teamSize: 3,
-      applicants: 20
+      applicants: 20,
+      onApply: handleApplyToProject
     },
     {
       title: "Blockchain Voting System",
@@ -71,7 +97,8 @@ const FeaturedProjects = () => {
       rolesNeeded: ["Blockchain Developer", "Security Expert"],
       duration: "5 months",
       teamSize: 4,
-      applicants: 6
+      applicants: 6,
+      onApply: handleApplyToProject
     },
     {
       title: "Smart IoT Dorm System",
@@ -85,7 +112,8 @@ const FeaturedProjects = () => {
       rolesNeeded: ["IoT Developer", "Mobile Developer", "Hardware Engineer"],
       duration: "3 months",
       teamSize: 4,
-      applicants: 10
+      applicants: 10,
+      onApply: handleApplyToProject
     }
   ];
 
@@ -109,7 +137,10 @@ const FeaturedProjects = () => {
         </div>
         
         <div className="text-center mt-12">
-          <button className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg">
+          <button 
+            onClick={() => navigate("/projects")}
+            className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg"
+          >
             View All Projects
           </button>
         </div>
