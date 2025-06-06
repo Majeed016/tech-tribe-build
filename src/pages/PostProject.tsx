@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -8,10 +9,12 @@ import { Label } from "@/components/ui/label";
 import { ArrowLeft, Plus, X, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
+import { useProjects } from "@/hooks/useProjects";
 
 const PostProject = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { createProject } = useProjects();
   const [skills, setSkills] = useState<string[]>([]);
   const [roles, setRoles] = useState<string[]>([]);
   const [currentSkill, setCurrentSkill] = useState("");
@@ -20,6 +23,7 @@ const PostProject = () => {
   const [description, setDescription] = useState("");
   const [duration, setDuration] = useState("");
   const [teamSize, setTeamSize] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleAddSkill = () => {
     if (currentSkill.trim() && !skills.includes(currentSkill.trim())) {
@@ -35,7 +39,7 @@ const PostProject = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!title.trim() || !description.trim() || !duration.trim() || !teamSize.trim()) {
@@ -47,29 +51,33 @@ const PostProject = () => {
       return;
     }
 
-    // Save project to localStorage
-    const newProject = {
-      id: Date.now(),
-      title: title.trim(),
-      description: description.trim(),
-      duration: duration.trim(),
-      teamSize: parseInt(teamSize),
-      skills,
-      roles,
-      applicants: 0,
-      status: "active" as const,
-      createdDate: new Date().toLocaleDateString()
-    };
+    setIsSubmitting(true);
 
-    const existingProjects = JSON.parse(localStorage.getItem("userProjects") || "[]");
-    const updatedProjects = [...existingProjects, newProject];
-    localStorage.setItem("userProjects", JSON.stringify(updatedProjects));
+    try {
+      await createProject({
+        title: title.trim(),
+        description: description.trim(),
+        duration: duration.trim(),
+        team_size: parseInt(teamSize),
+        skills,
+        roles_needed: roles,
+      });
 
-    toast({
-      title: "Project posted successfully!",
-      description: "Your project is now live and accepting applications.",
-    });
-    navigate("/dashboard");
+      toast({
+        title: "Project posted successfully!",
+        description: "Your project is now live and accepting applications.",
+      });
+      navigate("/dashboard");
+    } catch (error) {
+      console.error('Error creating project:', error);
+      toast({
+        title: "Error posting project",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleClearForm = () => {
@@ -106,6 +114,7 @@ const PostProject = () => {
               variant="outline" 
               onClick={handleClearForm}
               className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              disabled={isSubmitting}
             >
               <Trash2 className="h-4 w-4 mr-2" />
               Clear Form
@@ -129,6 +138,7 @@ const PostProject = () => {
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="Enter your project title" 
                     required 
+                    disabled={isSubmitting}
                   />
                 </div>
 
@@ -141,6 +151,7 @@ const PostProject = () => {
                     placeholder="Describe your project idea, goals, and vision..."
                     className="min-h-[120px]"
                     required 
+                    disabled={isSubmitting}
                   />
                 </div>
 
@@ -153,6 +164,7 @@ const PostProject = () => {
                       onChange={(e) => setDuration(e.target.value)}
                       placeholder="e.g., 3 months" 
                       required 
+                      disabled={isSubmitting}
                     />
                   </div>
                   <div className="space-y-2">
@@ -164,6 +176,7 @@ const PostProject = () => {
                       onChange={(e) => setTeamSize(e.target.value)}
                       placeholder="e.g., 5" 
                       required 
+                      disabled={isSubmitting}
                     />
                   </div>
                 </div>
@@ -176,8 +189,9 @@ const PostProject = () => {
                       onChange={(e) => setCurrentSkill(e.target.value)}
                       placeholder="Add a skill (e.g., React, Python)"
                       onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddSkill())}
+                      disabled={isSubmitting}
                     />
-                    <Button type="button" onClick={handleAddSkill}>
+                    <Button type="button" onClick={handleAddSkill} disabled={isSubmitting}>
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
@@ -202,8 +216,9 @@ const PostProject = () => {
                       onChange={(e) => setCurrentRole(e.target.value)}
                       placeholder="Add a role (e.g., Frontend Developer)"
                       onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddRole())}
+                      disabled={isSubmitting}
                     />
-                    <Button type="button" onClick={handleAddRole}>
+                    <Button type="button" onClick={handleAddRole} disabled={isSubmitting}>
                       <Plus className="h-4 w-4" />
                     </Button>
                   </div>
@@ -220,8 +235,8 @@ const PostProject = () => {
                   </div>
                 </div>
 
-                <Button type="submit" className="w-full">
-                  Post Project
+                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  {isSubmitting ? "Posting Project..." : "Post Project"}
                 </Button>
               </form>
             </CardContent>

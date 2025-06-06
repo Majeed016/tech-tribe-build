@@ -8,8 +8,10 @@ import { Users, Clock, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import ApplicationModal from "./ApplicationModal";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ProjectCardProps {
+  id?: string;
   title: string;
   description: string;
   author: {
@@ -25,6 +27,7 @@ interface ProjectCardProps {
 }
 
 const ProjectCard = ({ 
+  id,
   title, 
   description, 
   author, 
@@ -36,11 +39,11 @@ const ProjectCard = ({
 }: ProjectCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
-  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
 
   const handleApplyClick = () => {
-    if (!isAuthenticated) {
+    if (!user) {
       toast({
         title: "Authentication required",
         description: "Please sign up or log in to apply to projects.",
@@ -141,7 +144,7 @@ const ProjectCard = ({
       <ApplicationModal
         isOpen={isApplicationModalOpen}
         onClose={() => setIsApplicationModalOpen(false)}
-        project={{ title, author, skills, rolesNeeded }}
+        project={{ id, title, author, skills, rolesNeeded }}
       />
     </>
   );

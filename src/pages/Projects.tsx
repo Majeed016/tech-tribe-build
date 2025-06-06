@@ -5,85 +5,39 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Code2, ArrowLeft, Search } from "lucide-react";
 import ProjectCard from "@/components/ProjectCard";
+import { useProjects } from "@/hooks/useProjects";
+import { useAuth } from "@/hooks/useAuth";
 
 const Projects = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
+  const { user } = useAuth();
+  const { projects, loading } = useProjects();
 
-  const sampleProjects = [
-    {
-      title: "AI-Powered Study Buddy App",
-      description: "Building a mobile app that uses machine learning to create personalized study schedules and quiz students on their weak areas.",
-      author: {
-        name: "Sarah Chen",
-        role: "CS Major",
-        avatar: ""
-      },
-      skills: ["React Native", "Python", "TensorFlow", "Node.js"],
-      rolesNeeded: ["Mobile Developer", "ML Engineer"],
-      duration: "3 months",
-      teamSize: 4,
-      applicants: 12
-    },
-    {
-      title: "Blockchain Voting System",
-      description: "A secure and transparent voting system built on blockchain technology for campus elections and decision-making.",
-      author: {
-        name: "Alex Rodriguez",
-        role: "Computer Science",
-        avatar: ""
-      },
-      skills: ["Blockchain", "Solidity", "React", "Web3"],
-      rolesNeeded: ["Blockchain Developer", "Frontend Developer"],
-      duration: "4 months",
-      teamSize: 5,
-      applicants: 18
-    },
-    {
-      title: "Sustainable Campus Marketplace",
-      description: "A web platform for students to buy, sell, and trade textbooks, furniture, and other campus essentials sustainably.",
-      author: {
-        name: "Mike Rodriguez",
-        role: "Business Major",
-        avatar: ""
-      },
-      skills: ["React", "Django", "PostgreSQL", "Stripe API"],
-      rolesNeeded: ["Frontend Developer", "Backend Developer", "UI/UX Designer"],
-      duration: "4 months",
-      teamSize: 5,
-      applicants: 8
-    },
-    {
-      title: "Virtual Reality Campus Tour",
-      description: "Creating an immersive VR experience for prospective students to explore college campuses from anywhere in the world.",
-      author: {
-        name: "Alex Kim",
-        role: "Game Design Major",
-        avatar: ""
-      },
-      skills: ["Unity", "C#", "Blender", "VR Development"],
-      rolesNeeded: ["VR Developer", "3D Artist", "Sound Designer"],
-      duration: "6 months",
-      teamSize: 6,
-      applicants: 15
-    }
-  ];
-
-  const filteredProjects = sampleProjects.filter(project =>
+  const filteredProjects = projects.filter(project =>
     project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
     project.skills.some(skill => skill.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleBack = () => {
-    // Check if user came from dashboard, otherwise go to home
-    if (isAuthenticated) {
+    if (user) {
       navigate("/dashboard");
     } else {
       navigate("/");
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p>Loading projects...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -106,7 +60,7 @@ const Projects = () => {
             </div>
 
             <div className="flex items-center space-x-3">
-              {isAuthenticated ? (
+              {user ? (
                 <Button variant="ghost" onClick={() => navigate("/dashboard")}>
                   Dashboard
                 </Button>
@@ -140,12 +94,26 @@ const Projects = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProjects.map((project, index) => (
-            <ProjectCard key={index} {...project} />
+          {filteredProjects.map((project) => (
+            <ProjectCard 
+              key={project.id} 
+              title={project.title}
+              description={project.description}
+              author={{
+                name: project.author_name,
+                role: project.author_role || "Student",
+                avatar: ""
+              }}
+              skills={project.skills}
+              rolesNeeded={project.roles_needed}
+              duration={project.duration}
+              teamSize={project.team_size}
+              applicants={0} // Will be calculated from applications table
+            />
           ))}
         </div>
 
-        {filteredProjects.length === 0 && (
+        {filteredProjects.length === 0 && !loading && (
           <div className="text-center py-12">
             <p className="text-muted-foreground">No projects found matching your search.</p>
           </div>

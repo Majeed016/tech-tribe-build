@@ -5,66 +5,50 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Code2, LogOut, Plus, User, Search, MessageSquare, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
-import { useEffect, useState } from "react";
-
-interface UserApplication {
-  id: number;
-  projectTitle: string;
-  role: string;
-  status: "pending" | "accepted" | "rejected";
-  appliedDate: string;
-}
-
-interface UserProject {
-  id: number;
-  title: string;
-  applicants: number;
-  status: "active";
-  createdDate: string;
-}
+import { useAuth } from "@/hooks/useAuth";
+import { useApplications } from "@/hooks/useApplications";
+import { useProjects } from "@/hooks/useProjects";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const userName = localStorage.getItem("userName") || "User";
-  const [userApplications, setUserApplications] = useState<UserApplication[]>([]);
-  const [userProjects, setUserProjects] = useState<UserProject[]>([]);
+  const { user, signOut } = useAuth();
+  const { userApplications, loading: applicationsLoading } = useApplications();
+  const { userProjects, deleteProject, loading: projectsLoading } = useProjects();
 
-  useEffect(() => {
-    // Load user applications from localStorage
-    const savedApplications = localStorage.getItem("userApplications");
-    if (savedApplications) {
-      setUserApplications(JSON.parse(savedApplications));
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Logged out successfully",
+        description: "See you next time!",
+      });
+      navigate("/");
+    } catch (error) {
+      console.error('Error logging out:', error);
+      toast({
+        title: "Error logging out",
+        description: "Please try again.",
+        variant: "destructive",
+      });
     }
-
-    // Load user projects from localStorage
-    const savedProjects = localStorage.getItem("userProjects");
-    if (savedProjects) {
-      setUserProjects(JSON.parse(savedProjects));
-    }
-  }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem("isAuthenticated");
-    localStorage.removeItem("userEmail");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("userRole");
-    toast({
-      title: "Logged out successfully",
-      description: "See you next time!",
-    });
-    navigate("/");
   };
 
-  const handleDeleteProject = (projectId: number, projectTitle: string) => {
-    const updatedProjects = userProjects.filter(project => project.id !== projectId);
-    setUserProjects(updatedProjects);
-    localStorage.setItem("userProjects", JSON.stringify(updatedProjects));
-    
-    toast({
-      title: "Project deleted",
-      description: `"${projectTitle}" has been removed successfully.`,
-    });
+  const handleDeleteProject = async (projectId: string, projectTitle: string) => {
+    try {
+      await deleteProject(projectId);
+      toast({
+        title: "Project deleted",
+        description: `"${projectTitle}" has been removed successfully.`,
+      });
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      toast({
+        title: "Error deleting project",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -99,7 +83,9 @@ const Dashboard = () => {
             </nav>
 
             <div className="flex items-center space-x-3">
-              <span className="text-sm text-muted-foreground">Welcome, {userName}</span>
+              <span className="text-sm text-muted-foreground">
+                Welcome, {user?.user_metadata?.full_name || user?.email}
+              </span>
               <Button variant="ghost" size="sm" onClick={handleLogout}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
@@ -152,7 +138,12 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {userApplications.length === 0 ? (
+                {applicationsLoading ? (
+                  <div className="text-center py-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                    <p className="text-sm text-muted-foreground">Loading applications...</p>
+                  </div>
+                ) : userApplications.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-4">
                     No applications yet. <button 
                       onClick={() => navigate("/projects")} 
@@ -164,13 +155,15 @@ const Dashboard = () => {
                 ) : (
                   userApplications.map((app) => (
                     <div key={app.id} className="border rounded-lg p-4">
-                      <h4 className="font-medium mb-1">{app.projectTitle}</h4>
+                      <h4 className="font-medium mb-1">{app.projects?.title || 'Project'}</h4>
                       <p className="text-sm text-muted-foreground mb-2">{app.role}</p>
                       <div className="flex justify-between items-center">
                         <Badge className={getStatusColor(app.status)}>
                           {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
                         </Badge>
-                        <span className="text-xs text-muted-foreground">{app.appliedDate}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(app.created_at).toLocaleDateString()}
+                        </span>
                       </div>
                     </div>
                   ))
@@ -187,7 +180,12 @@ const Dashboard = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {userProjects.length === 0 ? (
+                {projectsLoading ? (
+                  <div className="text-center py-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                    <p className="text-sm text-muted-foreground">Loading projects...</p>
+                  </div>
+                ) : userProjects.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-4">
                     No projects posted yet. <button 
                       onClick={() => navigate("/post-project")} 
@@ -211,8 +209,8 @@ const Dashboard = () => {
                         </Button>
                       </div>
                       <div className="flex justify-between items-center text-sm text-muted-foreground">
-                        <span>{project.applicants} applicants</span>
-                        <span>{project.createdDate}</span>
+                        <span>0 applicants</span> {/* Will show actual count when we add this functionality */}
+                        <span>{new Date(project.created_at).toLocaleDateString()}</span>
                       </div>
                       <div className="mt-2">
                         <Button

@@ -1,121 +1,27 @@
+
 import { useNavigate } from "react-router-dom";
 import ProjectCard from "./ProjectCard";
-import { useToast } from "@/hooks/use-toast";
+import { useProjects } from "@/hooks/useProjects";
 
 const FeaturedProjects = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
-  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
+  const { projects, loading } = useProjects();
 
-  const handleApplyToProject = () => {
-    if (!isAuthenticated) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign up or log in to apply to projects.",
-        variant: "destructive",
-      });
-      navigate("/signup");
-      return;
-    }
-    
-    toast({
-      title: "Application submitted!",
-      description: "Your application has been sent to the project owner.",
-    });
-  };
+  // Show first 6 projects as featured
+  const featuredProjects = projects.slice(0, 6);
 
-  const sampleProjects = [
-    {
-      title: "AI-Powered Study Buddy App",
-      description: "Building a mobile app that uses machine learning to create personalized study schedules and quiz students on their weak areas.",
-      author: {
-        name: "Sarah Chen",
-        role: "CS Major",
-        avatar: ""
-      },
-      skills: ["React Native", "Python", "TensorFlow", "Node.js"],
-      rolesNeeded: ["Mobile Developer", "ML Engineer"],
-      duration: "3 months",
-      teamSize: 4,
-      applicants: 12,
-      onApply: handleApplyToProject
-    },
-    {
-      title: "Sustainable Campus Marketplace",
-      description: "A web platform for students to buy, sell, and trade textbooks, furniture, and other campus essentials sustainably.",
-      author: {
-        name: "Mike Rodriguez",
-        role: "Business Major",
-        avatar: ""
-      },
-      skills: ["React", "Django", "PostgreSQL", "Stripe API"],
-      rolesNeeded: ["Frontend Developer", "Backend Developer", "UI/UX Designer"],
-      duration: "4 months",
-      teamSize: 5,
-      applicants: 8,
-      onApply: handleApplyToProject
-    },
-    {
-      title: "Virtual Reality Campus Tour",
-      description: "Creating an immersive VR experience for prospective students to explore college campuses from anywhere in the world.",
-      author: {
-        name: "Alex Kim",
-        role: "Game Design Major",
-        avatar: ""
-      },
-      skills: ["Unity", "C#", "Blender", "VR Development"],
-      rolesNeeded: ["VR Developer", "3D Artist", "Sound Designer"],
-      duration: "6 months",
-      teamSize: 6,
-      applicants: 15,
-      onApply: handleApplyToProject
-    },
-    {
-      title: "Mental Health Chatbot",
-      description: "Developing an AI chatbot to provide mental health support and resources for college students, with crisis intervention features.",
-      author: {
-        name: "Emma Thompson",
-        role: "Psychology Major",
-        avatar: ""
-      },
-      skills: ["Python", "NLP", "React", "Docker"],
-      rolesNeeded: ["AI Developer", "Frontend Developer"],
-      duration: "4 months",
-      teamSize: 3,
-      applicants: 20,
-      onApply: handleApplyToProject
-    },
-    {
-      title: "Blockchain Voting System",
-      description: "Building a secure, transparent voting system for student government elections using blockchain technology.",
-      author: {
-        name: "David Park",
-        role: "Computer Engineering",
-        avatar: ""
-      },
-      skills: ["Solidity", "Web3.js", "React", "Ethereum"],
-      rolesNeeded: ["Blockchain Developer", "Security Expert"],
-      duration: "5 months",
-      teamSize: 4,
-      applicants: 6,
-      onApply: handleApplyToProject
-    },
-    {
-      title: "Smart IoT Dorm System",
-      description: "Creating an IoT system to automate dorm room lighting, temperature, and security with mobile app control.",
-      author: {
-        name: "Lisa Wang",
-        role: "Electrical Engineering",
-        avatar: ""
-      },
-      skills: ["Arduino", "React Native", "IoT", "Firebase"],
-      rolesNeeded: ["IoT Developer", "Mobile Developer", "Hardware Engineer"],
-      duration: "3 months",
-      teamSize: 4,
-      applicants: 10,
-      onApply: handleApplyToProject
-    }
-  ];
+  if (loading) {
+    return (
+      <section className="py-16 bg-gradient-to-b from-white to-blue-50/30">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p>Loading featured projects...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-16 bg-gradient-to-b from-white to-blue-50/30">
@@ -131,19 +37,48 @@ const FeaturedProjects = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sampleProjects.map((project, index) => (
-            <ProjectCard key={index} {...project} />
+          {featuredProjects.map((project) => (
+            <ProjectCard 
+              key={project.id} 
+              id={project.id}
+              title={project.title}
+              description={project.description}
+              author={{
+                name: project.author_name,
+                role: project.author_role || "Student",
+                avatar: ""
+              }}
+              skills={project.skills}
+              rolesNeeded={project.roles_needed}
+              duration={project.duration}
+              teamSize={project.team_size}
+              applicants={0} // Will be calculated from applications table
+            />
           ))}
         </div>
         
-        <div className="text-center mt-12">
-          <button 
-            onClick={() => navigate("/projects")}
-            className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg"
-          >
-            View All Projects
-          </button>
-        </div>
+        {featuredProjects.length === 0 && !loading && (
+          <div className="text-center">
+            <p className="text-muted-foreground mb-4">No projects available yet.</p>
+            <button 
+              onClick={() => navigate("/post-project")}
+              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg"
+            >
+              Post the First Project
+            </button>
+          </div>
+        )}
+        
+        {featuredProjects.length > 0 && (
+          <div className="text-center mt-12">
+            <button 
+              onClick={() => navigate("/projects")}
+              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200 hover:shadow-lg"
+            >
+              View All Projects
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );

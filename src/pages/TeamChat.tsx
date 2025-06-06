@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,90 +8,72 @@ import { ArrowLeft, Send, Users } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-interface Message {
-  id: number;
-  user: string;
-  message: string;
-  timestamp: string;
-}
+import { useMessages } from "@/hooks/useMessages";
+import { useAuth } from "@/hooks/useAuth";
+import { useProjects } from "@/hooks/useProjects";
 
 const TeamChat = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const projectId = searchParams.get("project");
   const [message, setMessage] = useState("");
-  const [messages, setMessages] = useState<Message[]>([]);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  const { messages, loading, sendMessage } = useMessages(projectId);
+  const { projects } = useProjects();
+  
+  const project = projects.find(p => p.id === projectId);
+  const projectTitle = project ? project.title : projectId ? `Project ${projectId}` : "General Chat";
 
-  // Get project-specific messages from localStorage
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    const chatKey = projectId ? `chat_${projectId}` : "general_chat";
-    const savedMessages = localStorage.getItem(chatKey);
-    
-    if (savedMessages) {
-      setMessages(JSON.parse(savedMessages));
-    } else {
-      // Default messages for different projects
-      const defaultMessages: Message[] = projectId ? [
-        {
-          id: 1,
-          user: "Project Owner",
-          message: `Welcome to the ${getProjectTitle()} team chat! Let's collaborate effectively.`,
-          timestamp: "10:30 AM"
-        }
-      ] : [
-        {
-          id: 1,
-          user: "System",
-          message: "Welcome to the general team chat!",
-          timestamp: "10:30 AM"
-        }
-      ];
-      setMessages(defaultMessages);
-    }
-  }, [projectId]);
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
-  const getProjectTitle = () => {
-    if (!projectId) return "General Chat";
-    
-    // Try to get project title from user's posted projects
-    const userProjects = JSON.parse(localStorage.getItem("userProjects") || "[]");
-    const project = userProjects.find((p: any) => p.id.toString() === projectId);
-    
-    return project ? project.title : `Project ${projectId}`;
-  };
-
-  const projectTitle = getProjectTitle();
-  const teamMembers = projectId ? 
-    ["Project Owner", "John Doe", "Alice Smith", "You"] : 
-    ["System", "General Users"];
-
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim()) return;
 
-    const newMessage: Message = {
-      id: messages.length + 1,
-      user: localStorage.getItem("userName") || "You",
-      message: message.trim(),
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    };
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to send messages.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    const updatedMessages = [...messages, newMessage];
-    setMessages(updatedMessages);
-    
-    // Save to localStorage with project-specific key
-    const chatKey = projectId ? `chat_${projectId}` : "general_chat";
-    localStorage.setItem(chatKey, JSON.stringify(updatedMessages));
-    
-    setMessage("");
-    
-    toast({
-      title: "Message sent",
-      description: "Your message has been delivered to the team.",
-    });
+    try {
+      await sendMessage(message.trim());
+      setMessage("");
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast({
+        title: "Error sending message",
+        description: "Please try again.",
+        variant: "destructive",
+      });
+    }
   };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="max-w-2xl mx-auto text-center">
+            <h1 className="text-2xl font-bold mb-4">Authentication Required</h1>
+            <p className="text-muted-foreground mb-6">Please log in to access team chat.</p>
+            <Button onClick={() => navigate("/login")}>
+              Log In
+            </Button>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -115,20 +97,38 @@ const TeamChat = () => {
                   <Users className="h-5 w-5 mr-2" />
                   Team Members
                 </CardTitle>
-                <CardDescription>{teamMembers.length} members</CardDescription>
+                <CardDescription>
+                  {projectId ? "Project team" : "General chat users"}
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {teamMembers.map((member, index) => (
-                    <div key={index} className="flex items-center gap-2">
+                  {project && (
+                    <div className="flex items-center gap-2">
                       <Avatar className="h-8 w-8">
                         <AvatarFallback className="text-xs">
-                          {member.split(' ').map(n => n[0]).join('')}
+                          {project.author_name.split(' ').map(n => n[0]).join('')}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="text-sm font-medium">{member}</span>
+                      <div>
+                        <span className="text-sm font-medium">{project.author_name}</span>
+                        <div className="text-xs text-muted-foreground">Project Owner</div>
+                      </div>
                     </div>
-                  ))}
+                  )}
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="text-xs">
+                        {user.user_metadata?.full_name?.split(' ').map(n => n[0]).join('') || 'Y'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <span className="text-sm font-medium">
+                        {user.user_metadata?.full_name || user.email} (You)
+                      </span>
+                      <div className="text-xs text-muted-foreground">Team Member</div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -142,22 +142,36 @@ const TeamChat = () => {
               <CardContent className="h-96 flex flex-col">
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto space-y-4 mb-4 p-4 bg-muted/30 rounded-lg">
-                  {messages.map((msg) => (
-                    <div key={msg.id} className="flex gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="text-xs">
-                          {msg.user.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-medium">{msg.user}</span>
-                          <span className="text-xs text-muted-foreground">{msg.timestamp}</span>
-                        </div>
-                        <p className="text-sm">{msg.message}</p>
-                      </div>
+                  {loading ? (
+                    <div className="text-center py-4">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                      <p className="text-sm text-muted-foreground">Loading messages...</p>
                     </div>
-                  ))}
+                  ) : messages.length === 0 ? (
+                    <div className="text-center py-8">
+                      <p className="text-muted-foreground">No messages yet. Start the conversation!</p>
+                    </div>
+                  ) : (
+                    messages.map((msg) => (
+                      <div key={msg.id} className="flex gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarFallback className="text-xs">
+                            {msg.user_name.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm font-medium">{msg.user_name}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          <p className="text-sm">{msg.message}</p>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                  <div ref={messagesEndRef} />
                 </div>
 
                 {/* Message Input */}
@@ -168,7 +182,7 @@ const TeamChat = () => {
                     placeholder="Type your message..."
                     className="flex-1"
                   />
-                  <Button type="submit">
+                  <Button type="submit" disabled={!message.trim()}>
                     <Send className="h-4 w-4" />
                   </Button>
                 </form>
@@ -194,28 +208,6 @@ const TeamChat = () => {
               </Card>
             </div>
           )}
-
-          <div className="mt-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Supabase Realtime Integration</CardTitle>
-                <CardDescription>
-                  This chat uses mock data stored locally. To enable real-time messaging across devices, 
-                  connect your project to Supabase and we'll set up Supabase Realtime for live collaboration.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="outline" onClick={() => {
-                  toast({
-                    title: "Supabase Integration Required",
-                    description: "Click the Supabase button in the top right to enable real-time features.",
-                  });
-                }}>
-                  Enable Real-time Chat
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
         </div>
       </main>
     </div>

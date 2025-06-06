@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,11 +7,13 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useApplications } from "@/hooks/useApplications";
 
 interface ApplicationModalProps {
   isOpen: boolean;
   onClose: () => void;
   project: {
+    id?: string;
     title: string;
     author: {
       name: string;
@@ -22,12 +25,14 @@ interface ApplicationModalProps {
 
 const ApplicationModal = ({ isOpen, onClose, project }: ApplicationModalProps) => {
   const { toast } = useToast();
+  const { createApplication } = useApplications();
   const [selectedRole, setSelectedRole] = useState("");
   const [message, setMessage] = useState("");
   const [githubProfile, setGithubProfile] = useState("");
   const [portfolioLink, setPortfolioLink] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!selectedRole) {
@@ -48,33 +53,47 @@ const ApplicationModal = ({ isOpen, onClose, project }: ApplicationModalProps) =
       return;
     }
 
-    // Save application to localStorage
-    const newApplication = {
-      id: Date.now(),
-      projectTitle: project.title,
-      role: selectedRole,
-      status: "pending" as const,
-      appliedDate: new Date().toLocaleDateString(),
-      message: message.trim(),
-      githubProfile,
-      portfolioLink
-    };
+    if (!project.id) {
+      toast({
+        title: "Project ID missing",
+        description: "Cannot submit application without project ID.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    const existingApplications = JSON.parse(localStorage.getItem("userApplications") || "[]");
-    const updatedApplications = [...existingApplications, newApplication];
-    localStorage.setItem("userApplications", JSON.stringify(updatedApplications));
+    setIsSubmitting(true);
 
-    toast({
-      title: "Application submitted!",
-      description: "Your application has been sent to the project owner.",
-    });
+    try {
+      await createApplication({
+        project_id: project.id,
+        role: selectedRole,
+        message: message.trim(),
+        github_profile: githubProfile,
+        portfolio_link: portfolioLink,
+      });
 
-    // Reset form
-    setSelectedRole("");
-    setMessage("");
-    setGithubProfile("");
-    setPortfolioLink("");
-    onClose();
+      toast({
+        title: "Application submitted!",
+        description: "Your application has been sent to the project owner.",
+      });
+
+      // Reset form
+      setSelectedRole("");
+      setMessage("");
+      setGithubProfile("");
+      setPortfolioLink("");
+      onClose();
+    } catch (error) {
+      console.error('Error submitting application:', error);
+      toast({
+        title: "Error submitting application",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -145,11 +164,11 @@ const ApplicationModal = ({ isOpen, onClose, project }: ApplicationModalProps) =
           </div>
 
           <div className="flex gap-2 pt-4">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1" disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button type="submit" className="flex-1">
-              Submit Application
+            <Button type="submit" className="flex-1" disabled={isSubmitting}>
+              {isSubmitting ? "Submitting..." : "Submit Application"}
             </Button>
           </div>
         </form>
