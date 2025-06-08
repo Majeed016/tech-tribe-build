@@ -9,7 +9,130 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      applications: {
+        Row: {
+          applicant_id: string
+          applicant_name: string
+          created_at: string
+          id: string
+          message: string | null
+          project_id: string
+          role: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          applicant_id: string
+          applicant_name: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          project_id: string
+          role: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          applicant_id?: string
+          applicant_name?: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          project_id?: string
+          role?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "applications_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          project_id: string
+          user_id: string
+          user_name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          project_id: string
+          user_id: string
+          user_name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          project_id?: string
+          user_id?: string
+          user_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          author_id: string
+          author_name: string
+          author_role: string
+          created_at: string
+          description: string
+          duration: string
+          id: string
+          roles_needed: string[] | null
+          skills: string[] | null
+          team_size: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          author_name: string
+          author_role?: string
+          created_at?: string
+          description: string
+          duration: string
+          id?: string
+          roles_needed?: string[] | null
+          skills?: string[] | null
+          team_size: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          author_name?: string
+          author_role?: string
+          created_at?: string
+          description?: string
+          duration?: string
+          id?: string
+          roles_needed?: string[] | null
+          skills?: string[] | null
+          team_size?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

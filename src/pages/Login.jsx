@@ -25,12 +25,21 @@ const Login = () => {
       const { data, error } = await signIn(email, password);
       
       if (error) {
+        let errorMessage = error.message;
+        
+        // Handle specific error cases
+        if (error.message.includes('Email not confirmed')) {
+          errorMessage = "Please check your email and click the confirmation link before signing in.";
+        } else if (error.message.includes('Invalid login credentials')) {
+          errorMessage = "Invalid email or password. Please check your credentials and try again.";
+        }
+        
         toast({
           title: "Login failed",
-          description: error.message,
+          description: errorMessage,
           variant: "destructive",
         });
-      } else {
+      } else if (data?.user) {
         toast({
           title: "Login successful!",
           description: "Welcome back to CollabChain.",
@@ -38,9 +47,10 @@ const Login = () => {
         navigate("/dashboard");
       }
     } catch (error) {
+      console.error('Login error:', error);
       toast({
         title: "Login failed",
-        description: "An unexpected error occurred.",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -74,6 +84,7 @@ const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -85,6 +96,7 @@ const Login = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                disabled={isLoading}
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>

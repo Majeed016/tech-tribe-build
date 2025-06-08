@@ -16,7 +16,10 @@ export const useProjects = () => {
         .select('*')
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.error('Error fetching projects:', error)
+        throw error
+      }
       setProjects(data || [])
     } catch (error) {
       console.error('Error fetching projects:', error)
@@ -35,7 +38,10 @@ export const useProjects = () => {
         .eq('author_id', user.id)
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.error('Error fetching user projects:', error)
+        throw error
+      }
       setUserProjects(data || [])
     } catch (error) {
       console.error('Error fetching user projects:', error)
@@ -43,30 +49,64 @@ export const useProjects = () => {
   }
 
   const createProject = async (projectData) => {
-    if (!user) throw new Error('User not authenticated')
+    if (!user) {
+      console.error('User not authenticated')
+      throw new Error('User not authenticated')
+    }
 
-    const { data, error } = await supabase
-      .from('projects')
-      .insert([{
-        ...projectData,
-        author_id: user.id,
-        author_name: user.user_metadata?.full_name || user.email,
-        author_role: user.user_metadata?.role || 'Developer'
-      }])
-      .select()
+    try {
+      const { data, error } = await supabase
+        .from('projects')
+        .insert([{
+          ...projectData,
+          author_id: user.id,
+          author_name: user.user_metadata?.full_name || user.email,
+          author_role: user.user_metadata?.role || 'Developer'
+        }])
+        .select()
 
-    if (error) throw error
-    return data[0]
+      if (error) {
+        console.error('Error creating project:', error)
+        throw error
+      }
+      
+      console.log('Project created successfully:', data)
+      
+      // Refresh projects list
+      await fetchProjects()
+      await fetchUserProjects()
+      
+      return data[0]
+    } catch (error) {
+      console.error('Error creating project:', error)
+      throw error
+    }
   }
 
   const deleteProject = async (projectId) => {
-    const { error } = await supabase
-      .from('projects')
-      .delete()
-      .eq('id', projectId)
-      .eq('author_id', user.id)
+    if (!user) {
+      throw new Error('User not authenticated')
+    }
 
-    if (error) throw error
+    try {
+      const { error } = await supabase
+        .from('projects')
+        .delete()
+        .eq('id', projectId)
+        .eq('author_id', user.id)
+
+      if (error) {
+        console.error('Error deleting project:', error)
+        throw error
+      }
+      
+      // Refresh projects list
+      await fetchProjects()
+      await fetchUserProjects()
+    } catch (error) {
+      console.error('Error deleting project:', error)
+      throw error
+    }
   }
 
   useEffect(() => {
@@ -76,6 +116,8 @@ export const useProjects = () => {
   useEffect(() => {
     if (user) {
       fetchUserProjects()
+    } else {
+      setUserProjects([])
     }
   }, [user])
 

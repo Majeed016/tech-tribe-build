@@ -25,6 +25,25 @@ const Signup = () => {
 
   const handleSignup = async (e) => {
     e.preventDefault();
+    
+    if (!formData.name.trim() || !formData.email.trim() || !formData.password.trim()) {
+      toast({
+        title: "Please fill all required fields",
+        description: "Name, email, and password are required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -35,22 +54,29 @@ const Signup = () => {
       });
 
       if (error) {
+        let errorMessage = error.message;
+        
+        if (error.message.includes('already registered')) {
+          errorMessage = "An account with this email already exists. Please try logging in instead.";
+        }
+        
         toast({
           title: "Signup failed",
-          description: error.message,
+          description: errorMessage,
           variant: "destructive",
         });
-      } else {
+      } else if (data?.user) {
         toast({
           title: "Account created successfully!",
-          description: "Please check your email to verify your account.",
+          description: "Welcome to CollabChain! You're now logged in.",
         });
         navigate("/dashboard");
       }
     } catch (error) {
+      console.error('Signup error:', error);
       toast({
         title: "Signup failed",
-        description: "An unexpected error occurred.",
+        description: "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -76,17 +102,18 @@ const Signup = () => {
         <CardContent>
           <form onSubmit={handleSignup} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
+              <Label htmlFor="name">Full Name *</Label>
               <Input
                 id="name"
                 placeholder="Enter your full name"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 required
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Email *</Label>
               <Input
                 id="email"
                 type="email"
@@ -94,22 +121,25 @@ const Signup = () => {
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 required
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Password *</Label>
               <Input
                 id="password"
                 type="password"
-                placeholder="Create a password"
+                placeholder="Create a password (min 6 characters)"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 required
+                disabled={isLoading}
+                minLength={6}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
-              <Select onValueChange={(value) => setFormData({ ...formData, role: value })}>
+              <Select onValueChange={(value) => setFormData({ ...formData, role: value })} disabled={isLoading}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select your role" />
                 </SelectTrigger>
@@ -129,6 +159,7 @@ const Signup = () => {
                 placeholder="Enter your college name"
                 value={formData.college}
                 onChange={(e) => setFormData({ ...formData, college: e.target.value })}
+                disabled={isLoading}
               />
             </div>
             <Button type="submit" className="w-full" disabled={isLoading}>
