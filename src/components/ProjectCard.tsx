@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,7 @@ import ApplicationModal from "./ApplicationModal";
 import { useAuth } from "@/hooks/useAuth";
 
 interface ProjectCardProps {
-  id?: string;
+  id: string; // Make this required instead of optional
   title: string;
   description: string;
   author: {
@@ -27,7 +26,7 @@ interface ProjectCardProps {
 }
 
 const ProjectCard = ({ 
-  id,
+  id, // Now required
   title, 
   description, 
   author, 
@@ -53,6 +52,7 @@ const ProjectCard = ({
       return;
     }
     
+    console.log('Opening application modal for project ID:', id);
     setIsApplicationModalOpen(true);
   };
 

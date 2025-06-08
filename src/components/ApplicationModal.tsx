@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +12,7 @@ interface ApplicationModalProps {
   isOpen: boolean;
   onClose: () => void;
   project: {
-    id?: string;
+    id: string; // Make this required instead of optional
     title: string;
     author: {
       name: string;
@@ -31,6 +30,8 @@ const ApplicationModal = ({ isOpen, onClose, project }: ApplicationModalProps) =
   const [githubProfile, setGithubProfile] = useState("");
   const [portfolioLink, setPortfolioLink] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  console.log('ApplicationModal project:', project);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,9 +55,10 @@ const ApplicationModal = ({ isOpen, onClose, project }: ApplicationModalProps) =
     }
 
     if (!project.id) {
+      console.error('Project ID is missing:', project);
       toast({
         title: "Project ID missing",
-        description: "Cannot submit application without project ID.",
+        description: "Cannot submit application without project ID. Please try again.",
         variant: "destructive",
       });
       return;
@@ -65,6 +67,7 @@ const ApplicationModal = ({ isOpen, onClose, project }: ApplicationModalProps) =
     setIsSubmitting(true);
 
     try {
+      console.log('Submitting application for project ID:', project.id);
       await createApplication({
         project_id: project.id,
         role: selectedRole,

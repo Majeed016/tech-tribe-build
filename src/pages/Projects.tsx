@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -13,6 +12,8 @@ const Projects = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { user } = useAuth();
   const { projects, loading } = useProjects();
+
+  console.log('Projects data:', projects);
 
   const filteredProjects = projects.filter(project =>
     project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -94,23 +95,27 @@ const Projects = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProjects.map((project) => (
-            <ProjectCard 
-              key={project.id} 
-              title={project.title}
-              description={project.description}
-              author={{
-                name: project.author_name,
-                role: project.author_role || "Student",
-                avatar: ""
-              }}
-              skills={project.skills}
-              rolesNeeded={project.roles_needed}
-              duration={project.duration}
-              teamSize={project.team_size}
-              applicants={0} // Will be calculated from applications table
-            />
-          ))}
+          {filteredProjects.map((project) => {
+            console.log('Rendering project:', project.id, project.title);
+            return (
+              <ProjectCard 
+                key={project.id} 
+                id={project.id} // Ensure this is passed as a string
+                title={project.title}
+                description={project.description}
+                author={{
+                  name: project.author_name,
+                  role: project.author_role || "Student",
+                  avatar: ""
+                }}
+                skills={project.skills || []}
+                rolesNeeded={project.roles_needed || []}
+                duration={project.duration}
+                teamSize={project.team_size}
+                applicants={0} // Will be calculated from applications table
+              />
+            );
+          })}
         </div>
 
         {filteredProjects.length === 0 && !loading && (
