@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +13,7 @@ interface ApplicationModalProps {
   isOpen: boolean;
   onClose: () => void;
   project: {
-    id: string; // Make this required instead of optional
+    id: string;
     title: string;
     author: {
       name: string;
@@ -68,13 +69,16 @@ const ApplicationModal = ({ isOpen, onClose, project }: ApplicationModalProps) =
 
     try {
       console.log('Submitting application for project ID:', project.id);
-      await createApplication({
+      
+      const applicationData = {
         project_id: project.id,
         role: selectedRole,
         message: message.trim(),
-        github_profile: githubProfile,
-        portfolio_link: portfolioLink,
-      });
+        github_profile: githubProfile.trim() || undefined,
+        portfolio_link: portfolioLink.trim() || undefined,
+      };
+
+      await createApplication(applicationData);
 
       toast({
         title: "Application submitted!",
@@ -87,11 +91,22 @@ const ApplicationModal = ({ isOpen, onClose, project }: ApplicationModalProps) =
       setGithubProfile("");
       setPortfolioLink("");
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error submitting application:', error);
+      
+      let errorMessage = "Please try again later.";
+      
+      if (error?.message?.includes('duplicate key')) {
+        errorMessage = "You have already applied for this project.";
+      } else if (error?.message?.includes('violates row-level security')) {
+        errorMessage = "Authentication error. Please log out and log back in.";
+      } else if (error?.message?.includes('not authenticated')) {
+        errorMessage = "Please log in to submit an application.";
+      }
+      
       toast({
         title: "Error submitting application",
-        description: "Please try again later.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
