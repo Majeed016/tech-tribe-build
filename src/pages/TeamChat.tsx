@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useMessages } from "@/hooks/useMessages";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
+import { useProjectApplications } from "@/hooks/useProjectApplications";
 
 const TeamChat = () => {
   const navigate = useNavigate();
@@ -23,9 +24,15 @@ const TeamChat = () => {
   
   const { messages, loading, sendMessage } = useMessages(projectId);
   const { projects } = useProjects();
+  const { projectApplications } = useProjectApplications();
   
   const project = projects.find(p => p.id === projectId);
   const projectTitle = project ? project.title : projectId ? `Project ${projectId}` : "General Chat";
+
+  // Get approved team members for this project
+  const approvedMembers = projectApplications.filter(app => 
+    app.project_id === projectId && app.status === 'approved'
+  );
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -98,7 +105,7 @@ const TeamChat = () => {
                   Team Members
                 </CardTitle>
                 <CardDescription>
-                  {projectId ? "Project team" : "General chat users"}
+                  {projectId ? "Project team members" : "General chat users"}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -116,19 +123,38 @@ const TeamChat = () => {
                       </div>
                     </div>
                   )}
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="text-xs">
-                        {user.user_metadata?.full_name?.split(' ').map(n => n[0]).join('') || 'Y'}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <span className="text-sm font-medium">
-                        {user.user_metadata?.full_name || user.email} (You)
-                      </span>
-                      <div className="text-xs text-muted-foreground">Team Member</div>
+                  
+                  {/* Show approved team members */}
+                  {approvedMembers.map((member) => (
+                    <div key={member.id} className="flex items-center gap-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="text-xs">
+                          {member.applicant_name.split(' ').map(n => n[0]).join('')}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <span className="text-sm font-medium">{member.applicant_name}</span>
+                        <div className="text-xs text-muted-foreground">{member.role}</div>
+                      </div>
                     </div>
-                  </div>
+                  ))}
+                  
+                  {/* Show current user if they're not the owner */}
+                  {project && user?.id !== project.author_id && (
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback className="text-xs">
+                          {user.user_metadata?.full_name?.split(' ').map(n => n[0]).join('') || 'Y'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <span className="text-sm font-medium">
+                          {user.user_metadata?.full_name || user.email} (You)
+                        </span>
+                        <div className="text-xs text-muted-foreground">Team Member</div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

@@ -129,14 +129,25 @@ const Dashboard = () => {
                           <CardTitle className="text-lg">{project.title}</CardTitle>
                           <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
                         </div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteProject(project.id)}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          Delete
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/team-chat?project=${project.id}`)}
+                            className="flex items-center gap-2"
+                          >
+                            <MessageSquare className="h-4 w-4" />
+                            Team Chat
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteProject(project.id)}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            Delete
+                          </Button>
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent>
@@ -185,9 +196,22 @@ const Dashboard = () => {
                           <CardTitle className="text-lg">{application.projects?.title}</CardTitle>
                           <p className="text-sm text-muted-foreground">Applied for: {application.role}</p>
                         </div>
-                        <Badge className={getStatusColor(application.status)}>
-                          {application.status}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge className={getStatusColor(application.status)}>
+                            {application.status}
+                          </Badge>
+                          {application.status === 'approved' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => navigate(`/team-chat?project=${application.project_id}`)}
+                              className="flex items-center gap-2"
+                            >
+                              <MessageSquare className="h-4 w-4" />
+                              Join Team Chat
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </CardHeader>
                     <CardContent>
