@@ -14,8 +14,10 @@ export type Database = {
           applicant_id: string
           applicant_name: string
           created_at: string
+          github_profile: string | null
           id: string
           message: string | null
+          portfolio_link: string | null
           project_id: string
           role: string
           status: string
@@ -25,8 +27,10 @@ export type Database = {
           applicant_id: string
           applicant_name: string
           created_at?: string
+          github_profile?: string | null
           id?: string
           message?: string | null
+          portfolio_link?: string | null
           project_id: string
           role: string
           status?: string
@@ -36,8 +40,10 @@ export type Database = {
           applicant_id?: string
           applicant_name?: string
           created_at?: string
+          github_profile?: string | null
           id?: string
           message?: string | null
+          portfolio_link?: string | null
           project_id?: string
           role?: string
           status?: string

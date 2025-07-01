@@ -1,66 +1,52 @@
 
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Code2, LogOut, Plus, User, Search, MessageSquare, Trash2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Code2, Plus, Users, BookOpen, MessageSquare, FileText } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useApplications } from "@/hooks/useApplications";
 import { useProjects } from "@/hooks/useProjects";
+import { useApplications } from "@/hooks/useApplications";
+import ProjectApplications from "@/components/ProjectApplications";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { user, signOut } = useAuth();
+  const { userProjects, loading: projectsLoading, deleteProject } = useProjects();
   const { userApplications, loading: applicationsLoading } = useApplications();
-  const { userProjects, deleteProject, loading: projectsLoading } = useProjects();
 
-  const handleLogout = async () => {
+  const handleSignOut = async () => {
     try {
       await signOut();
-      toast({
-        title: "Logged out successfully",
-        description: "See you next time!",
-      });
       navigate("/");
     } catch (error) {
-      console.error('Error logging out:', error);
-      toast({
-        title: "Error logging out",
-        description: "Please try again.",
-        variant: "destructive",
-      });
+      console.error("Error signing out:", error);
     }
   };
 
-  const handleDeleteProject = async (projectId: string, projectTitle: string) => {
-    try {
-      await deleteProject(projectId);
-      toast({
-        title: "Project deleted",
-        description: `"${projectTitle}" has been removed successfully.`,
-      });
-    } catch (error) {
-      console.error('Error deleting project:', error);
-      toast({
-        title: "Error deleting project",
-        description: "Please try again later.",
-        variant: "destructive",
-      });
+  const handleDeleteProject = async (projectId: string) => {
+    if (window.confirm("Are you sure you want to delete this project?")) {
+      try {
+        await deleteProject(projectId);
+      } catch (error) {
+        console.error("Error deleting project:", error);
+      }
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "accepted": return "bg-green-100 text-green-700";
-      case "rejected": return "bg-red-100 text-red-700";
-      default: return "bg-yellow-100 text-yellow-700";
+      case 'approved': return 'bg-green-100 text-green-800';
+      case 'rejected': return 'bg-red-100 text-red-800';
+      default: return 'bg-yellow-100 text-yellow-800';
     }
   };
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
@@ -72,23 +58,13 @@ const Dashboard = () => {
                 CollabChain
               </span>
             </div>
-            
-            <nav className="hidden md:flex items-center space-x-6">
-              <Button variant="ghost" onClick={() => navigate("/projects")}>
-                Browse Projects
-              </Button>
-              <Button variant="ghost" onClick={() => navigate("/team-chat")}>
-                Team Chat
-              </Button>
-            </nav>
 
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-4">
               <span className="text-sm text-muted-foreground">
                 Welcome, {user?.user_metadata?.full_name || user?.email}
               </span>
-              <Button variant="ghost" size="sm" onClick={handleLogout}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
+              <Button variant="outline" onClick={handleSignOut}>
+                Sign Out
               </Button>
             </div>
           </div>
@@ -96,140 +72,163 @@ const Dashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate("/projects")}>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Search className="h-5 w-5 mr-2" />
-                Browse Projects
-              </CardTitle>
-              <CardDescription>Discover exciting projects to join</CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate("/post-project")}>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Plus className="h-5 w-5 mr-2" />
-                Post Project
-              </CardTitle>
-              <CardDescription>Share your project idea with others</CardDescription>
-            </CardHeader>
-          </Card>
-
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate("/profile")}>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <User className="h-5 w-5 mr-2" />
-                My Profile
-              </CardTitle>
-              <CardDescription>Manage your profile and applications</CardDescription>
-            </CardHeader>
-          </Card>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
+          <p className="text-muted-foreground">Manage your projects and applications</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* My Applications */}
-          <Card>
-            <CardHeader>
-              <CardTitle>My Applications</CardTitle>
-              <CardDescription>Track your project applications</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {applicationsLoading ? (
-                  <div className="text-center py-4">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                    <p className="text-sm text-muted-foreground">Loading applications...</p>
-                  </div>
-                ) : userApplications.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    No applications yet. <button 
-                      onClick={() => navigate("/projects")} 
-                      className="text-blue-600 hover:underline"
-                    >
-                      Browse projects
-                    </button> to get started!
-                  </p>
-                ) : (
-                  userApplications.map((app) => (
-                    <div key={app.id} className="border rounded-lg p-4">
-                      <h4 className="font-medium mb-1">{app.projects?.title || 'Project'}</h4>
-                      <p className="text-sm text-muted-foreground mb-2">{app.role}</p>
-                      <div className="flex justify-between items-center">
-                        <Badge className={getStatusColor(app.status)}>
-                          {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-                        </Badge>
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(app.created_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </CardContent>
-          </Card>
+        <Tabs defaultValue="my-projects" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="my-projects" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              My Projects
+            </TabsTrigger>
+            <TabsTrigger value="applications" className="flex items-center gap-2">
+              <MessageSquare className="h-4 w-4" />
+              My Applications
+            </TabsTrigger>
+            <TabsTrigger value="applicants" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Applicants
+            </TabsTrigger>
+            <TabsTrigger value="browse" className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              Browse Projects
+            </TabsTrigger>
+          </TabsList>
 
-          {/* My Posted Projects */}
-          <Card>
-            <CardHeader>
-              <CardTitle>My Posted Projects</CardTitle>
-              <CardDescription>Manage your project listings</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {projectsLoading ? (
-                  <div className="text-center py-4">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-                    <p className="text-sm text-muted-foreground">Loading projects...</p>
-                  </div>
-                ) : userProjects.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    No projects posted yet. <button 
-                      onClick={() => navigate("/post-project")} 
-                      className="text-blue-600 hover:underline"
-                    >
-                      Post your first project
-                    </button>!
-                  </p>
-                ) : (
-                  userProjects.map((project) => (
-                    <div key={project.id} className="border rounded-lg p-4">
-                      <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-medium">{project.title}</h4>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleDeleteProject(project.id, project.title)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="flex justify-between items-center text-sm text-muted-foreground">
-                        <span>0 applicants</span> {/* Will show actual count when we add this functionality */}
-                        <span>{new Date(project.created_at).toLocaleDateString()}</span>
-                      </div>
-                      <div className="mt-2">
+          {/* My Projects Tab */}
+          <TabsContent value="my-projects" className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-semibold">My Projects</h2>
+              <Button onClick={() => navigate("/post-project")} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                New Project
+              </Button>
+            </div>
+
+            {projectsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : userProjects.length === 0 ? (
+              <Card>
+                <CardContent className="text-center py-8">
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Projects Yet</h3>
+                  <p className="text-gray-500 mb-4">Create your first project to start collaborating with others.</p>
+                  <Button onClick={() => navigate("/post-project")}>Create Project</Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4">
+                {userProjects.map((project) => (
+                  <Card key={project.id}>
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="text-lg">{project.title}</CardTitle>
+                          <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
+                        </div>
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => navigate(`/team-chat?project=${project.id}`)}
-                          className="mr-2"
+                          onClick={() => handleDeleteProject(project.id)}
+                          className="text-red-600 hover:text-red-700"
                         >
-                          <MessageSquare className="h-4 w-4 mr-1" />
-                          Team Chat
+                          Delete
                         </Button>
                       </div>
-                    </div>
-                  ))
-                )}
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {project.skills?.map((skill) => (
+                          <Badge key={skill} variant="secondary" className="text-xs">
+                            {skill}
+                          </Badge>
+                        ))}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        <p>Duration: {project.duration}</p>
+                        <p>Team Size: {project.team_size} members</p>
+                        <p>Created: {new Date(project.created_at).toLocaleDateString()}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            )}
+          </TabsContent>
+
+          {/* My Applications Tab */}
+          <TabsContent value="applications" className="space-y-6">
+            <h2 className="text-2xl font-semibold">My Applications</h2>
+
+            {applicationsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : userApplications.length === 0 ? (
+              <Card>
+                <CardContent className="text-center py-8">
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Applications Yet</h3>
+                  <p className="text-gray-500 mb-4">Browse projects and apply to join interesting collaborations.</p>
+                  <Button onClick={() => navigate("/projects")}>Browse Projects</Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4">
+                {userApplications.map((application) => (
+                  <Card key={application.id}>
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="text-lg">{application.projects?.title}</CardTitle>
+                          <p className="text-sm text-muted-foreground">Applied for: {application.role}</p>
+                        </div>
+                        <Badge className={getStatusColor(application.status)}>
+                          {application.status}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm mb-3">{application.message}</p>
+                      <div className="text-sm text-muted-foreground">
+                        <p>Applied: {new Date(application.created_at).toLocaleDateString()}</p>
+                        {application.github_profile && (
+                          <p>GitHub: <a href={application.github_profile} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">View Profile</a></p>
+                        )}
+                        {application.portfolio_link && (
+                          <p>Portfolio: <a href={application.portfolio_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">View Portfolio</a></p>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Applicants Tab */}
+          <TabsContent value="applicants" className="space-y-6">
+            <ProjectApplications />
+          </TabsContent>
+
+          {/* Browse Projects Tab */}
+          <TabsContent value="browse" className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-semibold">Browse Projects</h2>
+              <Button onClick={() => navigate("/projects")}>
+                View All Projects
+              </Button>
+            </div>
+            <Card>
+              <CardContent className="text-center py-8">
+                <p className="text-gray-500 mb-4">Discover amazing projects and find your next collaboration opportunity.</p>
+                <Button onClick={() => navigate("/projects")}>Browse All Projects</Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );
