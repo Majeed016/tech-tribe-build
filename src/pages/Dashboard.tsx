@@ -5,17 +5,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Code2, Plus, Users, BookOpen, MessageSquare, FileText } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Code2, Plus, Users, BookOpen, MessageSquare, FileText, Star } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
 import { useApplications } from "@/hooks/useApplications";
 import ProjectApplications from "@/components/ProjectApplications";
+import TeamRating from "@/components/TeamRating";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { userProjects, loading: projectsLoading, deleteProject } = useProjects();
   const { userApplications, loading: applicationsLoading } = useApplications();
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [showRatingModal, setShowRatingModal] = useState(false);
 
   const handleSignOut = async () => {
     try {
@@ -36,6 +40,11 @@ const Dashboard = () => {
     }
   };
 
+  const handleRateTeammates = (project) => {
+    setSelectedProject(project);
+    setShowRatingModal(true);
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved': return 'bg-green-100 text-green-800';
@@ -54,16 +63,16 @@ const Dashboard = () => {
               <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600">
                 <Code2 className="h-5 w-5 text-white" />
               </div>
-              <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <span className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 CollabChain
               </span>
             </div>
 
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-muted-foreground">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <span className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
                 Welcome, {user?.user_metadata?.full_name || user?.email}
               </span>
-              <Button variant="outline" onClick={handleSignOut}>
+              <Button variant="outline" onClick={handleSignOut} size="sm">
                 Sign Out
               </Button>
             </div>
@@ -71,37 +80,37 @@ const Dashboard = () => {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Dashboard</h1>
           <p className="text-muted-foreground">Manage your projects and applications</p>
         </div>
 
         <Tabs defaultValue="my-projects" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="my-projects" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 h-auto">
+            <TabsTrigger value="my-projects" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3">
               <FileText className="h-4 w-4" />
-              My Projects
+              <span className="text-xs sm:text-sm">My Projects</span>
             </TabsTrigger>
-            <TabsTrigger value="applications" className="flex items-center gap-2">
+            <TabsTrigger value="applications" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3">
               <MessageSquare className="h-4 w-4" />
-              My Applications
+              <span className="text-xs sm:text-sm">My Applications</span>
             </TabsTrigger>
-            <TabsTrigger value="applicants" className="flex items-center gap-2">
+            <TabsTrigger value="applicants" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3">
               <Users className="h-4 w-4" />
-              Applicants
+              <span className="text-xs sm:text-sm">Applicants</span>
             </TabsTrigger>
-            <TabsTrigger value="browse" className="flex items-center gap-2">
+            <TabsTrigger value="browse" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 p-2 sm:p-3">
               <BookOpen className="h-4 w-4" />
-              Browse Projects
+              <span className="text-xs sm:text-sm">Browse</span>
             </TabsTrigger>
           </TabsList>
 
           {/* My Projects Tab */}
           <TabsContent value="my-projects" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-semibold">My Projects</h2>
-              <Button onClick={() => navigate("/post-project")} className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <h2 className="text-xl sm:text-2xl font-semibold">My Projects</h2>
+              <Button onClick={() => navigate("/post-project")} className="flex items-center gap-2 w-full sm:w-auto">
                 <Plus className="h-4 w-4" />
                 New Project
               </Button>
@@ -124,12 +133,12 @@ const Dashboard = () => {
                 {userProjects.map((project) => (
                   <Card key={project.id}>
                     <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle className="text-lg">{project.title}</CardTitle>
-                          <p className="text-sm text-muted-foreground mt-1">{project.description}</p>
+                      <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <CardTitle className="text-lg mb-2">{project.title}</CardTitle>
+                          <p className="text-sm text-muted-foreground">{project.description}</p>
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                           <Button
                             variant="outline"
                             size="sm"
@@ -137,7 +146,16 @@ const Dashboard = () => {
                             className="flex items-center gap-2"
                           >
                             <MessageSquare className="h-4 w-4" />
-                            Team Chat
+                            <span className="hidden sm:inline">Team Chat</span>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRateTeammates(project)}
+                            className="flex items-center gap-2"
+                          >
+                            <Star className="h-4 w-4" />
+                            <span className="hidden sm:inline">Rate Team</span>
                           </Button>
                           <Button
                             variant="outline"
@@ -158,7 +176,7 @@ const Dashboard = () => {
                           </Badge>
                         ))}
                       </div>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-sm text-muted-foreground space-y-1">
                         <p>Duration: {project.duration}</p>
                         <p>Team Size: {project.team_size} members</p>
                         <p>Created: {new Date(project.created_at).toLocaleDateString()}</p>
@@ -172,7 +190,7 @@ const Dashboard = () => {
 
           {/* My Applications Tab */}
           <TabsContent value="applications" className="space-y-6">
-            <h2 className="text-2xl font-semibold">My Applications</h2>
+            <h2 className="text-xl sm:text-2xl font-semibold">My Applications</h2>
 
             {applicationsLoading ? (
               <div className="flex items-center justify-center py-8">
@@ -191,8 +209,8 @@ const Dashboard = () => {
                 {userApplications.map((application) => (
                   <Card key={application.id}>
                     <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div>
+                      <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                        <div className="flex-1">
                           <CardTitle className="text-lg">{application.projects?.title}</CardTitle>
                           <p className="text-sm text-muted-foreground">Applied for: {application.role}</p>
                         </div>
@@ -201,28 +219,42 @@ const Dashboard = () => {
                             {application.status}
                           </Badge>
                           {application.status === 'approved' && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => navigate(`/team-chat?project=${application.project_id}`)}
-                              className="flex items-center gap-2"
-                            >
-                              <MessageSquare className="h-4 w-4" />
-                              Join Team Chat
-                            </Button>
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => navigate(`/team-chat?project=${application.project_id}`)}
+                                className="flex items-center gap-2"
+                              >
+                                <MessageSquare className="h-4 w-4" />
+                                <span className="hidden sm:inline">Join Team Chat</span>
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleRateTeammates({
+                                  id: application.project_id,
+                                  title: application.projects?.title
+                                })}
+                                className="flex items-center gap-2"
+                              >
+                                <Star className="h-4 w-4" />
+                                <span className="hidden sm:inline">Rate Team</span>
+                              </Button>
+                            </>
                           )}
                         </div>
                       </div>
                     </CardHeader>
                     <CardContent>
                       <p className="text-sm mb-3">{application.message}</p>
-                      <div className="text-sm text-muted-foreground">
+                      <div className="text-sm text-muted-foreground space-y-1">
                         <p>Applied: {new Date(application.created_at).toLocaleDateString()}</p>
                         {application.github_profile && (
-                          <p>GitHub: <a href={application.github_profile} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">View Profile</a></p>
+                          <p>GitHub: <a href={application.github_profile} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all">View Profile</a></p>
                         )}
                         {application.portfolio_link && (
-                          <p>Portfolio: <a href={application.portfolio_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">View Portfolio</a></p>
+                          <p>Portfolio: <a href={application.portfolio_link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all">View Portfolio</a></p>
                         )}
                       </div>
                     </CardContent>
@@ -239,9 +271,9 @@ const Dashboard = () => {
 
           {/* Browse Projects Tab */}
           <TabsContent value="browse" className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-semibold">Browse Projects</h2>
-              <Button onClick={() => navigate("/projects")}>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <h2 className="text-xl sm:text-2xl font-semibold">Browse Projects</h2>
+              <Button onClick={() => navigate("/projects")} className="w-full sm:w-auto">
                 View All Projects
               </Button>
             </div>
@@ -254,6 +286,22 @@ const Dashboard = () => {
           </TabsContent>
         </Tabs>
       </main>
+
+      {/* Rating Modal */}
+      <Dialog open={showRatingModal} onOpenChange={setShowRatingModal}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Rate Your Teammates</DialogTitle>
+          </DialogHeader>
+          {selectedProject && (
+            <TeamRating
+              projectId={selectedProject.id}
+              projectTitle={selectedProject.title}
+              onClose={() => setShowRatingModal(false)}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

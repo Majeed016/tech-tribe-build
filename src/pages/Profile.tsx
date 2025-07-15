@@ -8,11 +8,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Edit2, Plus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import Header from "@/components/Header";
+import UserRatings from "@/components/UserRatings";
 
 const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [skills, setSkills] = useState(["React", "TypeScript", "Node.js"]);
   const [currentSkill, setCurrentSkill] = useState("");
@@ -69,19 +72,19 @@ const Profile = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
             <div className="flex items-center gap-4">
-              <Button variant="ghost" onClick={() => navigate("/dashboard")}>
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Dashboard
+              <Button variant="ghost" onClick={() => navigate("/dashboard")} className="p-2 sm:px-4">
+                <ArrowLeft className="h-4 w-4 mr-0 sm:mr-2" />
+                <span className="hidden sm:inline">Back to Dashboard</span>
               </Button>
-              <h1 className="text-3xl font-bold">My Profile</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold">My Profile</h1>
             </div>
             <Button 
               onClick={() => isEditing ? handleSaveProfile() : setIsEditing(true)}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 w-full sm:w-auto"
             >
               <Edit2 className="h-4 w-4" />
               {isEditing ? "Save Changes" : "Edit Profile"}
@@ -90,7 +93,7 @@ const Profile = () => {
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Profile Information */}
-            <div className="lg:col-span-2">
+            <div className="lg:col-span-2 space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle>Profile Information</CardTitle>
@@ -153,6 +156,7 @@ const Profile = () => {
                           onChange={(e) => setCurrentSkill(e.target.value)}
                           placeholder="Add a skill"
                           onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddSkill())}
+                          className="flex-1"
                         />
                         <Button type="button" onClick={handleAddSkill}>
                           <Plus className="h-4 w-4" />
@@ -175,10 +179,18 @@ const Profile = () => {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Ratings Section */}
+              {user && (
+                <UserRatings 
+                  userId={user.id} 
+                  userName={user.user_metadata?.full_name || user.email}
+                />
+              )}
             </div>
 
             {/* Applications */}
-            <div>
+            <div className="space-y-6">
               <Card>
                 <CardHeader>
                   <CardTitle>My Applications</CardTitle>
@@ -188,9 +200,9 @@ const Profile = () => {
                   <div className="space-y-4">
                     {applications.map((app) => (
                       <div key={app.id} className="border rounded-lg p-3">
-                        <h4 className="font-medium text-sm mb-1">{app.projectTitle}</h4>
+                        <h4 className="font-medium text-sm mb-1 line-clamp-2">{app.projectTitle}</h4>
                         <p className="text-xs text-muted-foreground mb-2">{app.role}</p>
-                        <div className="flex justify-between items-center">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                           <span className={`text-xs px-2 py-1 rounded-full ${getStatusColor(app.status)}`}>
                             {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
                           </span>

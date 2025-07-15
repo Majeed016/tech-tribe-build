@@ -68,13 +68,13 @@ const ProjectApplications = () => {
   return (
     <>
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold">Project Applications</h2>
+        <h2 className="text-xl sm:text-2xl font-bold">Project Applications</h2>
         
         <div className="grid gap-4">
           {projectApplications.map((application) => (
             <Card key={application.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
                   <div className="flex items-center space-x-3">
                     <Avatar className="h-10 w-10">
                       <AvatarFallback>
@@ -102,7 +102,7 @@ const ProjectApplications = () => {
                   <p className="text-sm line-clamp-2">{application.message}</p>
                 </div>
                 
-                <div className="flex items-center space-x-4 text-xs text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
                   <div className="flex items-center space-x-1">
                     <Clock className="h-3 w-3" />
                     <span>{new Date(application.created_at).toLocaleDateString()}</span>
@@ -122,23 +122,24 @@ const ProjectApplications = () => {
                 </div>
               </CardContent>
               
-              <CardFooter className="flex items-center justify-between pt-0">
+              <CardFooter className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 pt-0">
                 <Button 
                   variant="outline" 
                   size="sm"
                   onClick={() => openApplicationDetails(application)}
+                  className="w-full sm:w-auto"
                 >
                   View Details
                 </Button>
                 
                 {application.status === 'pending' && (
-                  <div className="flex space-x-2">
+                  <div className="flex gap-2 w-full sm:w-auto">
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => handleStatusUpdate(application.id, 'rejected')}
                       disabled={processingId === application.id}
-                      className="text-red-600 hover:text-red-700"
+                      className="text-red-600 hover:text-red-700 flex-1 sm:flex-none"
                     >
                       Reject
                     </Button>
@@ -146,6 +147,7 @@ const ProjectApplications = () => {
                       size="sm"
                       onClick={() => handleStatusUpdate(application.id, 'approved')}
                       disabled={processingId === application.id}
+                      className="flex-1 sm:flex-none"
                     >
                       Approve
                     </Button>
@@ -159,7 +161,7 @@ const ProjectApplications = () => {
 
       {/* Application Details Modal */}
       <Dialog open={isDetailModalOpen} onOpenChange={setIsDetailModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Application Details</DialogTitle>
             <DialogDescription>
@@ -207,7 +209,7 @@ const ProjectApplications = () => {
                       href={selectedApplication.github_profile} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline break-all"
+                      className="text-blue-600 hover:underline break-all text-sm"
                     >
                       {selectedApplication.github_profile}
                     </a>
@@ -224,7 +226,7 @@ const ProjectApplications = () => {
                       href={selectedApplication.portfolio_link} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline break-all"
+                      className="text-blue-600 hover:underline break-all text-sm"
                     >
                       {selectedApplication.portfolio_link}
                     </a>
@@ -240,7 +242,7 @@ const ProjectApplications = () => {
               </div>
               
               {selectedApplication.status === 'pending' && (
-                <div className="flex justify-end space-x-3 pt-4 border-t">
+                <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t">
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -248,7 +250,7 @@ const ProjectApplications = () => {
                       setIsDetailModalOpen(false);
                     }}
                     disabled={processingId === selectedApplication.id}
-                    className="text-red-600 hover:text-red-700"
+                    className="text-red-600 hover:text-red-700 w-full sm:w-auto"
                   >
                     Reject Application
                   </Button>
@@ -258,6 +260,7 @@ const ProjectApplications = () => {
                       setIsDetailModalOpen(false);
                     }}
                     disabled={processingId === selectedApplication.id}
+                    className="w-full sm:w-auto"
                   >
                     Approve Application
                   </Button>
