@@ -72,23 +72,35 @@ export const useRatings = () => {
     if (!user) return []
 
     try {
-      // Get project owner
+      console.log('Fetching teammates for project:', projectId, 'current user:', user.id)
+      
+      // Get project details
       const { data: project, error: projectError } = await supabase
         .from('projects')
         .select('author_id, author_name')
         .eq('id', projectId)
         .single()
 
-      if (projectError) throw projectError
+      if (projectError) {
+        console.error('Error fetching project:', projectError)
+        throw projectError
+      }
 
-      // Get approved applicants
+      console.log('Project data:', project)
+
+      // Get approved applications
       const { data: applications, error: appError } = await supabase
         .from('applications')
-        .select('applicant_id, applicant_name')
+        .select('applicant_id, applicant_name, role')
         .eq('project_id', projectId)
         .eq('status', 'approved')
 
-      if (appError) throw appError
+      if (appError) {
+        console.error('Error fetching applications:', appError)
+        throw appError
+      }
+
+      console.log('Approved applications:', applications)
 
       const teammates = []
       
@@ -107,11 +119,12 @@ export const useRatings = () => {
           teammates.push({
             id: app.applicant_id,
             name: app.applicant_name,
-            role: 'Team Member'
+            role: app.role
           })
         }
       })
 
+      console.log('Final teammates list:', teammates)
       return teammates
     } catch (error) {
       console.error('Error fetching teammates:', error)

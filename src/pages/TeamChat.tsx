@@ -55,6 +55,11 @@ const TeamChat = () => {
     try {
       await sendMessage(message.trim());
       setMessage("");
+      
+      // Auto-scroll after sending message
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
     } catch (error) {
       console.error('Error sending message:', error);
       toast({

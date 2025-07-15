@@ -48,21 +48,26 @@ export const useMessages = (projectId) => {
     fetchMessages()
 
     if (projectId) {
-      // Set up realtime subscription
-      const subscription = supabase
-        .channel(`messages:${projectId}`)
-        .on('postgres_changes', {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'messages',
-          filter: `project_id=eq.${projectId}`
-        }, (payload) => {
-          setMessages(current => [...current, payload.new])
-        })
+      // Set up realtime subscription for new messages
+      const channel = supabase
+        .channel(`messages_${projectId}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'messages',
+            filter: `project_id=eq.${projectId}`
+          },
+          (payload) => {
+            console.log('New message received:', payload.new)
+            setMessages(current => [...current, payload.new])
+          }
+        )
         .subscribe()
 
       return () => {
-        subscription.unsubscribe()
+        supabase.removeChannel(channel)
       }
     }
   }, [projectId])
