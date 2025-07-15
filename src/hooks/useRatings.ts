@@ -104,25 +104,42 @@ export const useRatings = () => {
 
       const teammates = []
       
-      // Add project owner if it's not the current user
-      if (project.author_id !== user.id) {
-        teammates.push({
-          id: project.author_id,
-          name: project.author_name,
-          role: 'Project Owner'
-        })
-      }
-
-      // Add approved applicants (excluding current user)
-      applications?.forEach(app => {
-        if (app.applicant_id !== user.id) {
+      // Check if current user is the project owner
+      const isProjectOwner = project.author_id === user.id
+      
+      if (isProjectOwner) {
+        // If current user is project owner, add all approved applicants as teammates
+        applications?.forEach(app => {
           teammates.push({
             id: app.applicant_id,
             name: app.applicant_name,
             role: app.role
           })
+        })
+      } else {
+        // If current user is not project owner, check if they are an approved applicant
+        const isApprovedApplicant = applications?.some(app => app.applicant_id === user.id)
+        
+        if (isApprovedApplicant) {
+          // Add project owner as teammate
+          teammates.push({
+            id: project.author_id,
+            name: project.author_name,
+            role: 'Project Owner'
+          })
+          
+          // Add other approved applicants (excluding current user)
+          applications?.forEach(app => {
+            if (app.applicant_id !== user.id) {
+              teammates.push({
+                id: app.applicant_id,
+                name: app.applicant_name,
+                role: app.role
+              })
+            }
+          })
         }
-      })
+      }
 
       console.log('Final teammates list:', teammates)
       return teammates
