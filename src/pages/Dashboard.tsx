@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Code2, Plus, Users, BookOpen, MessageSquare, FileText, Star } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useProjects } from "@/hooks/useProjects";
@@ -292,6 +292,9 @@ const Dashboard = () => {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Rate Your Teammates</DialogTitle>
+            <DialogDescription>
+              Rate your teammates for the project "{selectedProject?.title}". Your feedback helps build trust in the community.
+            </DialogDescription>
           </DialogHeader>
           {selectedProject && (
             <TeamRating

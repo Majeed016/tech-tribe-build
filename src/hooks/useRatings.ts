@@ -70,12 +70,12 @@ export const useRatings = () => {
 
   const getProjectTeammates = async (projectId: string) => {
     if (!user) {
-      console.log('No user found')
+      console.log('❌ No user found')
       return []
     }
 
     try {
-      console.log('Fetching teammates for project:', projectId, 'current user:', user.id)
+      console.log('🔍 Fetching teammates for project:', projectId, 'current user:', user.id)
       
       // Get project details
       const { data: project, error: projectError } = await supabase
@@ -85,62 +85,61 @@ export const useRatings = () => {
         .single()
 
       if (projectError) {
-        console.error('Error fetching project:', projectError)
+        console.error('❌ Error fetching project:', projectError)
         throw projectError
       }
 
-      console.log('Project data:', project)
+      console.log('📋 Project data:', project)
 
-      // Get ALL applications for this project (not just approved ones initially)
-      const { data: allApplications, error: appError } = await supabase
+      // Get approved applications for this project
+      const { data: applications, error: appError } = await supabase
         .from('applications')
         .select('applicant_id, applicant_name, role, status')
         .eq('project_id', projectId)
+        .eq('status', 'approved')
 
       if (appError) {
-        console.error('Error fetching applications:', appError)
+        console.error('❌ Error fetching applications:', appError)
         throw appError
       }
 
-      console.log('All applications:', allApplications)
-
-      // Filter for approved applications
-      const approvedApplications = allApplications?.filter(app => app.status === 'approved') || []
-      console.log('Approved applications:', approvedApplications)
+      console.log('✅ Approved applications:', applications)
 
       const teammates = []
       
       // Check if current user is the project owner
       const isProjectOwner = project.author_id === user.id
-      console.log('Is current user project owner?', isProjectOwner)
+      console.log('👑 Is current user project owner?', isProjectOwner)
       
       // Check if current user is an approved applicant
-      const currentUserApplication = approvedApplications.find(app => app.applicant_id === user.id)
+      const currentUserApplication = applications?.find(app => app.applicant_id === user.id)
       const isApprovedApplicant = !!currentUserApplication
-      console.log('Is current user approved applicant?', isApprovedApplicant, currentUserApplication)
+      console.log('👤 Is current user approved applicant?', isApprovedApplicant, currentUserApplication)
       
       if (isProjectOwner) {
-        // If current user is project owner, they can rate all approved applicants
-        approvedApplications.forEach(app => {
+        // Project owner can rate all approved applicants
+        applications?.forEach(app => {
           teammates.push({
             id: app.applicant_id,
             name: app.applicant_name,
             role: app.role
           })
         })
-        console.log('Project owner can rate:', teammates.length, 'teammates')
+        console.log('👑 Project owner can rate:', teammates.length, 'teammates')
       } else if (isApprovedApplicant) {
-        // If current user is an approved applicant, they can rate the project owner and other approved applicants
+        // Approved applicant can rate the project owner and other approved applicants
         
-        // Add project owner as teammate
-        teammates.push({
-          id: project.author_id,
-          name: project.author_name,
-          role: 'Project Owner'
-        })
+        // Add project owner as teammate (if not the current user)
+        if (project.author_id !== user.id) {
+          teammates.push({
+            id: project.author_id,
+            name: project.author_name,
+            role: 'Project Owner'
+          })
+        }
         
         // Add other approved applicants (excluding current user)
-        approvedApplications.forEach(app => {
+        applications?.forEach(app => {
           if (app.applicant_id !== user.id) {
             teammates.push({
               id: app.applicant_id,
@@ -149,15 +148,15 @@ export const useRatings = () => {
             })
           }
         })
-        console.log('Approved applicant can rate:', teammates.length, 'teammates')
+        console.log('👤 Approved applicant can rate:', teammates.length, 'teammates')
       } else {
-        console.log('Current user is neither project owner nor approved applicant')
+        console.log('❌ Current user is neither project owner nor approved applicant')
       }
 
-      console.log('Final teammates list:', teammates)
+      console.log('🎯 Final teammates list:', teammates)
       return teammates
     } catch (error) {
-      console.error('Error fetching teammates:', error)
+      console.error('❌ Error fetching teammates:', error)
       return []
     }
   }

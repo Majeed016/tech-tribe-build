@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,17 +24,21 @@ const TeamRating = ({ projectId, projectTitle, onClose }: TeamRatingProps) => {
   const [existingRatings, setExistingRatings] = useState({});
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [debugInfo, setDebugInfo] = useState('');
 
   useEffect(() => {
     loadTeammates();
   }, [projectId]);
 
   const loadTeammates = async () => {
-    console.log('Loading teammates for project:', projectId);
+    console.log('🔄 Loading teammates for project:', projectId);
+    setDebugInfo('Loading teammates...');
+    
     try {
       const teammatesList = await getProjectTeammates(projectId);
-      console.log('Received teammates:', teammatesList);
+      console.log('✅ Received teammates:', teammatesList);
       setTeammates(teammatesList);
+      setDebugInfo(`Found ${teammatesList.length} teammates`);
 
       // Check for existing ratings
       const existingData = {};
@@ -47,7 +52,8 @@ const TeamRating = ({ projectId, projectTitle, onClose }: TeamRatingProps) => {
       }
       setExistingRatings(existingData);
     } catch (error) {
-      console.error('Error loading teammates:', error);
+      console.error('❌ Error loading teammates:', error);
+      setDebugInfo(`Error: ${error.message}`);
       toast({
         title: "Error loading teammates",
         description: "Please try again later.",
@@ -151,11 +157,17 @@ const TeamRating = ({ projectId, projectTitle, onClose }: TeamRatingProps) => {
             <p className="text-muted-foreground text-center py-4">
               No teammates to rate for this project.
             </p>
-            <div className="text-sm text-muted-foreground space-y-2">
+            <div className="text-sm text-muted-foreground space-y-2 bg-gray-50 p-4 rounded-lg">
               <p><strong>Debug info:</strong></p>
               <p>Project ID: {projectId}</p>
-              <p>Check the browser console for detailed logs about teammate detection.</p>
-              <p>Make sure you are either the project owner or an approved team member.</p>
+              <p>Status: {debugInfo}</p>
+              <p><strong>Possible reasons:</strong></p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>You are not the project owner or an approved team member</li>
+                <li>No applications have been approved for this project yet</li>
+                <li>You are the only member of this project</li>
+              </ul>
+              <p className="text-xs mt-2">Check the browser console for detailed logs about teammate detection.</p>
             </div>
             <Button onClick={onClose} className="w-full">
               Close
