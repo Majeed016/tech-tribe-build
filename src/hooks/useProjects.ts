@@ -3,9 +3,24 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../integrations/supabase/client'
 import { useAuth } from './useAuth'
 
+interface Project {
+  id: string;
+  title: string;
+  description: string;
+  author_id: string;
+  author_name: string;
+  author_role: string;
+  skills: string[];
+  roles_needed: string[];
+  duration: string;
+  team_size: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export const useProjects = () => {
-  const [projects, setProjects] = useState([])
-  const [userProjects, setUserProjects] = useState([])
+  const [projects, setProjects] = useState<Project[]>([])
+  const [userProjects, setUserProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const { user } = useAuth()
 
@@ -48,7 +63,7 @@ export const useProjects = () => {
     }
   }
 
-  const createProject = async (projectData: any) => {
+  const createProject = async (projectData: Partial<Project>) => {
     if (!user) {
       console.error('User not authenticated')
       throw new Error('User not authenticated')

@@ -8,7 +8,7 @@ const FeaturedProjects = () => {
   const { projects, loading } = useProjects();
 
   // Show first 6 projects as featured
-  const featuredProjects = projects.slice(0, 6);
+  const featuredProjects = projects?.slice(0, 6) || [];
 
   if (loading) {
     return (
@@ -48,8 +48,8 @@ const FeaturedProjects = () => {
                 role: project.author_role || "Student",
                 avatar: ""
               }}
-              skills={project.skills}
-              rolesNeeded={project.roles_needed}
+              skills={project.skills || []}
+              rolesNeeded={project.roles_needed || []}
               duration={project.duration}
               teamSize={project.team_size}
               applicants={0} // Will be calculated from applications table
