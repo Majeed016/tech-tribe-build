@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Star, User } from "lucide-react";
+import { Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRatings } from "@/hooks/useRatings";
 
@@ -30,8 +29,10 @@ const TeamRating = ({ projectId, projectTitle, onClose }: TeamRatingProps) => {
   }, [projectId]);
 
   const loadTeammates = async () => {
+    console.log('Loading teammates for project:', projectId);
     try {
       const teammatesList = await getProjectTeammates(projectId);
+      console.log('Received teammates:', teammatesList);
       setTeammates(teammatesList);
 
       // Check for existing ratings
@@ -146,12 +147,20 @@ const TeamRating = ({ projectId, projectTitle, onClose }: TeamRatingProps) => {
           <CardTitle>Rate Your Teammates</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground text-center py-4">
-            No teammates to rate for this project.
-          </p>
-          <Button onClick={onClose} className="w-full">
-            Close
-          </Button>
+          <div className="space-y-4">
+            <p className="text-muted-foreground text-center py-4">
+              No teammates to rate for this project.
+            </p>
+            <div className="text-sm text-muted-foreground space-y-2">
+              <p><strong>Debug info:</strong></p>
+              <p>Project ID: {projectId}</p>
+              <p>Check the browser console for detailed logs about teammate detection.</p>
+              <p>Make sure you are either the project owner or an approved team member.</p>
+            </div>
+            <Button onClick={onClose} className="w-full">
+              Close
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );

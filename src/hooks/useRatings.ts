@@ -69,7 +69,10 @@ export const useRatings = () => {
   }
 
   const getProjectTeammates = async (projectId: string) => {
-    if (!user) return []
+    if (!user) {
+      console.log('No user found')
+      return []
+    }
 
     try {
       console.log('Fetching teammates for project:', projectId, 'current user:', user.id)
@@ -88,57 +91,67 @@ export const useRatings = () => {
 
       console.log('Project data:', project)
 
-      // Get approved applications
-      const { data: applications, error: appError } = await supabase
+      // Get ALL applications for this project (not just approved ones initially)
+      const { data: allApplications, error: appError } = await supabase
         .from('applications')
-        .select('applicant_id, applicant_name, role')
+        .select('applicant_id, applicant_name, role, status')
         .eq('project_id', projectId)
-        .eq('status', 'approved')
 
       if (appError) {
         console.error('Error fetching applications:', appError)
         throw appError
       }
 
-      console.log('Approved applications:', applications)
+      console.log('All applications:', allApplications)
+
+      // Filter for approved applications
+      const approvedApplications = allApplications?.filter(app => app.status === 'approved') || []
+      console.log('Approved applications:', approvedApplications)
 
       const teammates = []
       
       // Check if current user is the project owner
       const isProjectOwner = project.author_id === user.id
+      console.log('Is current user project owner?', isProjectOwner)
+      
+      // Check if current user is an approved applicant
+      const currentUserApplication = approvedApplications.find(app => app.applicant_id === user.id)
+      const isApprovedApplicant = !!currentUserApplication
+      console.log('Is current user approved applicant?', isApprovedApplicant, currentUserApplication)
       
       if (isProjectOwner) {
-        // If current user is project owner, add all approved applicants as teammates
-        applications?.forEach(app => {
+        // If current user is project owner, they can rate all approved applicants
+        approvedApplications.forEach(app => {
           teammates.push({
             id: app.applicant_id,
             name: app.applicant_name,
             role: app.role
           })
         })
-      } else {
-        // If current user is not project owner, check if they are an approved applicant
-        const isApprovedApplicant = applications?.some(app => app.applicant_id === user.id)
+        console.log('Project owner can rate:', teammates.length, 'teammates')
+      } else if (isApprovedApplicant) {
+        // If current user is an approved applicant, they can rate the project owner and other approved applicants
         
-        if (isApprovedApplicant) {
-          // Add project owner as teammate
-          teammates.push({
-            id: project.author_id,
-            name: project.author_name,
-            role: 'Project Owner'
-          })
-          
-          // Add other approved applicants (excluding current user)
-          applications?.forEach(app => {
-            if (app.applicant_id !== user.id) {
-              teammates.push({
-                id: app.applicant_id,
-                name: app.applicant_name,
-                role: app.role
-              })
-            }
-          })
-        }
+        // Add project owner as teammate
+        teammates.push({
+          id: project.author_id,
+          name: project.author_name,
+          role: 'Project Owner'
+        })
+        
+        // Add other approved applicants (excluding current user)
+        approvedApplications.forEach(app => {
+          if (app.applicant_id !== user.id) {
+            teammates.push({
+              id: app.applicant_id,
+              name: app.applicant_name,
+              role: app.role
+            })
+          }
+        })
+        console.log('Approved applicant can rate:', teammates.length, 'teammates')
+      } else {
+        console.log('Current user is neither project owner nor approved applicant')
       }
 
       console.log('Final teammates list:', teammates)
