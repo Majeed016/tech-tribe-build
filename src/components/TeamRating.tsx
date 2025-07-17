@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Star } from "lucide-react";
+import { Star, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRatings } from "@/hooks/useRatings";
 
@@ -33,12 +33,18 @@ const TeamRating = ({ projectId, projectTitle, onClose }: TeamRatingProps) => {
   const loadTeammates = async () => {
     console.log('🔄 Loading teammates for project:', projectId);
     setDebugInfo('Loading teammates...');
+    setLoading(true);
     
     try {
       const teammatesList = await getProjectTeammates(projectId);
       console.log('✅ Received teammates:', teammatesList);
       setTeammates(teammatesList);
-      setDebugInfo(`Found ${teammatesList.length} teammates`);
+      
+      if (teammatesList.length === 0) {
+        setDebugInfo('No teammates found. You need to be either the project owner or an approved team member to rate teammates.');
+      } else {
+        setDebugInfo(`Found ${teammatesList.length} teammate(s) to rate`);
+      }
 
       // Check for existing ratings
       const existingData = {};
@@ -53,7 +59,7 @@ const TeamRating = ({ projectId, projectTitle, onClose }: TeamRatingProps) => {
       setExistingRatings(existingData);
     } catch (error) {
       console.error('❌ Error loading teammates:', error);
-      setDebugInfo(`Error: ${error.message}`);
+      setDebugInfo(`Error loading teammates: ${error.message}`);
       toast({
         title: "Error loading teammates",
         description: "Please try again later.",
@@ -138,40 +144,9 @@ const TeamRating = ({ projectId, projectTitle, onClose }: TeamRatingProps) => {
     return (
       <Card className="w-full max-w-2xl mx-auto">
         <CardContent className="p-6">
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center space-x-2">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (teammates.length === 0) {
-    return (
-      <Card className="w-full max-w-2xl mx-auto">
-        <CardHeader>
-          <CardTitle>Rate Your Teammates</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <p className="text-muted-foreground text-center py-4">
-              No teammates to rate for this project.
-            </p>
-            <div className="text-sm text-muted-foreground space-y-2 bg-gray-50 p-4 rounded-lg">
-              <p><strong>Debug info:</strong></p>
-              <p>Project ID: {projectId}</p>
-              <p>Status: {debugInfo}</p>
-              <p><strong>Possible reasons:</strong></p>
-              <ul className="list-disc list-inside space-y-1">
-                <li>You are not the project owner or an approved team member</li>
-                <li>No applications have been approved for this project yet</li>
-                <li>You are the only member of this project</li>
-              </ul>
-              <p className="text-xs mt-2">Check the browser console for detailed logs about teammate detection.</p>
-            </div>
-            <Button onClick={onClose} className="w-full">
-              Close
-            </Button>
+            <span>Loading teammates...</span>
           </div>
         </CardContent>
       </Card>
@@ -181,70 +156,102 @@ const TeamRating = ({ projectId, projectTitle, onClose }: TeamRatingProps) => {
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle>Rate Your Teammates</CardTitle>
+        <CardTitle className="flex items-center justify-between">
+          Rate Your Teammates
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={loadTeammates}
+            disabled={loading}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </CardTitle>
         <p className="text-muted-foreground">Project: {projectTitle}</p>
       </CardHeader>
       <CardContent className="space-y-6">
-        {teammates.map((teammate) => {
-          const isExistingRating = existingRatings[teammate.id];
-          
-          return (
-            <div key={teammate.id} className="border rounded-lg p-4">
-              <div className="flex items-center space-x-3 mb-4">
-                <Avatar>
-                  <AvatarFallback>
-                    {teammate.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h4 className="font-medium">{teammate.name}</h4>
-                  <Badge variant="secondary" className="text-xs">
-                    {teammate.role}
-                  </Badge>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="text-sm font-medium mb-2 block">
-                    Rating {isExistingRating && "(Already submitted)"}
-                  </label>
-                  {renderStars(teammate.id)}
-                </div>
-
-                <div>
-                  <label htmlFor={`feedback-${teammate.id}`} className="text-sm font-medium mb-2 block">
-                    Feedback (Optional)
-                  </label>
-                  <Textarea
-                    id={`feedback-${teammate.id}`}
-                    placeholder="Share your experience working with this teammate..."
-                    value={feedback[teammate.id] || ''}
-                    onChange={(e) => handleFeedbackChange(teammate.id, e.target.value)}
-                    disabled={isExistingRating || submitting}
-                    className="min-h-[80px]"
-                  />
-                </div>
-
-                {!isExistingRating && (
-                  <Button
-                    onClick={() => handleSubmitRating(teammate.id)}
-                    disabled={submitting || !ratings[teammate.id]}
-                    className="w-full"
-                  >
-                    {submitting ? 'Submitting...' : 'Submit Rating'}
-                  </Button>
-                )}
-
-                {isExistingRating && (
-                  <p className="text-sm text-green-600 font-medium">
-                    ✓ Rating submitted on {new Date(isExistingRating.created_at).toLocaleDateString()}
-                  </p>
-                )}
-              </div>
+        {teammates.length === 0 ? (
+          <div className="space-y-4">
+            <p className="text-muted-foreground text-center py-4">
+              No teammates available to rate.
+            </p>
+            <div className="text-sm text-muted-foreground space-y-2 bg-gray-50 p-4 rounded-lg">
+              <p><strong>Debug info:</strong></p>
+              <p>Project ID: {projectId}</p>
+              <p>Status: {debugInfo}</p>
+              <p><strong>To rate teammates, you must be:</strong></p>
+              <ul className="list-disc list-inside space-y-1">
+                <li>The project owner with approved team members, OR</li>
+                <li>An approved team member of this project</li>
+              </ul>
+              <p className="text-xs mt-2">
+                Make sure applications are approved in the Dashboard before trying to rate teammates.
+              </p>
             </div>
-          );
-        })}
+          </div>
+        ) : (
+          teammates.map((teammate) => {
+            const isExistingRating = existingRatings[teammate.id];
+            
+            return (
+              <div key={teammate.id} className="border rounded-lg p-4">
+                <div className="flex items-center space-x-3 mb-4">
+                  <Avatar>
+                    <AvatarFallback>
+                      {teammate.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h4 className="font-medium">{teammate.name}</h4>
+                    <Badge variant="secondary" className="text-xs">
+                      {teammate.role}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">
+                      Rating {isExistingRating && "(Already submitted)"}
+                    </label>
+                    {renderStars(teammate.id)}
+                  </div>
+
+                  <div>
+                    <label htmlFor={`feedback-${teammate.id}`} className="text-sm font-medium mb-2 block">
+                      Feedback (Optional)
+                    </label>
+                    <Textarea
+                      id={`feedback-${teammate.id}`}
+                      placeholder="Share your experience working with this teammate..."
+                      value={feedback[teammate.id] || ''}
+                      onChange={(e) => handleFeedbackChange(teammate.id, e.target.value)}
+                      disabled={isExistingRating || submitting}
+                      className="min-h-[80px]"
+                    />
+                  </div>
+
+                  {!isExistingRating && (
+                    <Button
+                      onClick={() => handleSubmitRating(teammate.id)}
+                      disabled={submitting || !ratings[teammate.id]}
+                      className="w-full"
+                    >
+                      {submitting ? 'Submitting...' : 'Submit Rating'}
+                    </Button>
+                  )}
+
+                  {isExistingRating && (
+                    <p className="text-sm text-green-600 font-medium">
+                      ✓ Rating submitted on {new Date(isExistingRating.created_at).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        )}
 
         <Button variant="outline" onClick={onClose} className="w-full">
           Close

@@ -1,16 +1,18 @@
+
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Users, Clock, User } from "lucide-react";
+import { Users, Clock, User, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import ApplicationModal from "./ApplicationModal";
+import ProjectDetailsModal from "./ProjectDetailsModal";
 import { useAuth } from "@/hooks/useAuth";
 
 interface ProjectCardProps {
-  id: string; // Make this required instead of optional
+  id: string;
   title: string;
   description: string;
   author: {
@@ -23,10 +25,11 @@ interface ProjectCardProps {
   duration: string;
   teamSize: number;
   applicants: number;
+  created_at?: string;
 }
 
 const ProjectCard = ({ 
-  id, // Now required
+  id,
   title, 
   description, 
   author, 
@@ -34,12 +37,14 @@ const ProjectCard = ({
   rolesNeeded, 
   duration, 
   teamSize, 
-  applicants
+  applicants,
+  created_at
 }: ProjectCardProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
   const [isApplicationModalOpen, setIsApplicationModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   const handleApplyClick = () => {
     if (!user) {
@@ -54,6 +59,23 @@ const ProjectCard = ({
     
     console.log('Opening application modal for project ID:', id);
     setIsApplicationModalOpen(true);
+  };
+
+  const handleViewDetailsClick = () => {
+    setIsDetailsModalOpen(true);
+  };
+
+  const projectData = {
+    id,
+    title,
+    description,
+    author,
+    skills,
+    rolesNeeded,
+    duration,
+    teamSize,
+    applicants,
+    created_at
   };
 
   return (
@@ -131,9 +153,17 @@ const ProjectCard = ({
           </div>
         </CardContent>
         
-        <CardFooter className="pt-0">
+        <CardFooter className="pt-0 flex gap-2">
           <Button 
-            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+            variant="outline"
+            className="flex-1"
+            onClick={handleViewDetailsClick}
+          >
+            <Eye className="h-4 w-4 mr-2" />
+            View Details
+          </Button>
+          <Button 
+            className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
             onClick={handleApplyClick}
           >
             Apply to Join
@@ -144,7 +174,13 @@ const ProjectCard = ({
       <ApplicationModal
         isOpen={isApplicationModalOpen}
         onClose={() => setIsApplicationModalOpen(false)}
-        project={{ id, title, author, skills, rolesNeeded }}
+        project={projectData}
+      />
+
+      <ProjectDetailsModal
+        isOpen={isDetailsModalOpen}
+        onClose={() => setIsDetailsModalOpen(false)}
+        project={projectData}
       />
     </>
   );
