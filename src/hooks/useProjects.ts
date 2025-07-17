@@ -18,6 +18,15 @@ interface Project {
   updated_at: string;
 }
 
+interface CreateProjectData {
+  title: string;
+  description: string;
+  skills?: string[];
+  roles_needed?: string[];
+  duration: string;
+  team_size: number;
+}
+
 export const useProjects = () => {
   const [projects, setProjects] = useState<Project[]>([])
   const [userProjects, setUserProjects] = useState<Project[]>([])
@@ -63,21 +72,28 @@ export const useProjects = () => {
     }
   }
 
-  const createProject = async (projectData: Partial<Project>) => {
+  const createProject = async (projectData: CreateProjectData) => {
     if (!user) {
       console.error('User not authenticated')
       throw new Error('User not authenticated')
     }
 
     try {
+      const projectToInsert = {
+        title: projectData.title,
+        description: projectData.description,
+        duration: projectData.duration,
+        team_size: projectData.team_size,
+        skills: projectData.skills || [],
+        roles_needed: projectData.roles_needed || [],
+        author_id: user.id,
+        author_name: user.user_metadata?.full_name || user.email || 'Unknown',
+        author_role: user.user_metadata?.role || 'Developer'
+      }
+
       const { data, error } = await supabase
         .from('projects')
-        .insert([{
-          ...projectData,
-          author_id: user.id,
-          author_name: user.user_metadata?.full_name || user.email,
-          author_role: user.user_metadata?.role || 'Developer'
-        }])
+        .insert(projectToInsert)
         .select()
 
       if (error) {
